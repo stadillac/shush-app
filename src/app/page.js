@@ -37,7 +37,7 @@ export default function HomePage() {
           <Heart className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-xl font-semibold mb-2">Guardian Protection</h3>
           <p className="text-gray-600">
-            Trusted friends control your unblocking decisions when you're emotionally vulnerable.
+            {"Trusted friends control your unblocking decisions when you're emotionally vulnerable."}
           </p>
         </div>
         <div className="text-center p-6">

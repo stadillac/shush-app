@@ -49,7 +49,7 @@ export default function Dashboard() {
           <CheckCircle className="h-8 w-8 text-green-600 mr-4" />
           <div>
             <h3 className="text-xl font-semibold text-green-800">7 Days Impulse-Free!</h3>
-            <p className="text-green-700">You're building healthy digital habits. Keep it up!</p>
+            <p className="text-green-700">{"You're building healthy digital habits. Keep it up!"}</p>
           </div>
         </div>
       </div>
