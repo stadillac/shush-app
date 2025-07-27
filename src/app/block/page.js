@@ -130,8 +130,8 @@ export default function BlockContactPage() {
             <h3 className="font-semibold text-blue-900 mb-2">What happens next?</h3>
             <div className="text-blue-800 text-sm space-y-2">
               <p>• Your Guardian will be notified of this new block</p>
-              <p>• If you want to unblock, you'll need Guardian approval</p>
-              <p>• We'll track your progress and celebrate milestones</p>
+              <p>• {"If you want to unblock, you'll need Guardian approval"}</p>
+              <p>• {"We'll track your progress and celebrate milestones"}</p>
             </div>
           </div>
 
@@ -471,7 +471,7 @@ export default function BlockContactPage() {
               <div>
                 <h3 className="text-sm font-medium text-yellow-800">Important</h3>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Once blocked, only your Guardian can approve unblocking this contact. Make sure you're ready to commit to this boundary.
+                  {"Once blocked, only your Guardian can approve unblocking this contact. Make sure you're ready to commit to this boundary."}
                 </p>
               </div>
             </div>
