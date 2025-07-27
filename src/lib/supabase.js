@@ -1,11 +1,20 @@
 // src/lib/supabase.js
 import { createClient } from '@supabase/supabase-js'
 
+// Debug: Log what we're getting from environment
+console.log('Environment check:')
+console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Present' : 'Missing')
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
+if (!supabaseUrl) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+}
+
+if (!supabaseAnonKey) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
@@ -14,18 +23,23 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Get user's blocked contacts
 export async function getBlockedContacts(userId) {
-  const { data, error } = await supabase
-    .from('blocked_contacts')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-  
-  if (error) {
-    console.error('Error fetching blocked contacts:', error)
+  try {
+    const { data, error } = await supabase
+      .from('blocked_contacts')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching blocked contacts:', error)
+      return []
+    }
+    
+    return data || []
+  } catch (err) {
+    console.error('Unexpected error in getBlockedContacts:', err)
     return []
   }
-  
-  return data || []
 }
 
 // Block a new contact
@@ -51,19 +65,24 @@ export async function blockContact(userId, contactData) {
 
 // Get user's guardian
 export async function getUserGuardian(userId) {
-  const { data, error } = await supabase
-    .from('guardians')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    .single()
-  
-  if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
-    console.error('Error fetching guardian:', error)
+  try {
+    const { data, error } = await supabase
+      .from('guardians')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single()
+    
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Error fetching guardian:', error)
+      return null
+    }
+    
+    return data
+  } catch (err) {
+    console.error('Unexpected error in getUserGuardian:', err)
     return null
   }
-  
-  return data
 }
 
 // Create unblock request
