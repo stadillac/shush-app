@@ -1,20 +1,19 @@
 // src/app/block/page.js
 'use client'
 import React, { useState, useEffect } from 'react'
-import { Shield, User, Phone, MessageSquare, AlertTriangle, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react'
-
-// Mock function - replace with your actual supabase function
-const blockContact = async (userId, contactData) => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1500))
-  return { id: Date.now(), ...contactData }
-}
+import { useRouter } from 'next/navigation'
+import { Shield, User, Phone, MessageSquare, AlertTriangle, CheckCircle, ArrowLeft, Loader2, Heart, Plus } from 'lucide-react'
+import { supabase, blockContact, getUserGuardian, hasActiveGuardian } from '../../lib/supabase'
 
 export default function BlockContactPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [pageLoading, setPageLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [user, setUser] = useState(null)
+  const [guardian, setGuardian] = useState(null)
+  const router = useRouter()
   
   const [formData, setFormData] = useState({
     name: '',
@@ -53,6 +52,39 @@ export default function BlockContactPage() {
     { value: 'high', label: 'High Risk', description: 'Frequent harmful contact attempts', color: 'bg-red-100 text-red-800' }
   ]
 
+  // Check authentication and Guardian on page load
+  useEffect(() => {
+    const checkUserAndGuardian = async () => {
+      try {
+        // Check authentication
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) {
+          router.push('/auth/login')
+          return
+        }
+        setUser(user)
+
+        // Check if user has an active Guardian
+        const guardianData = await getUserGuardian(user.id)
+        setGuardian(guardianData)
+        
+        if (!guardianData) {
+          // No Guardian found - they need to add one first
+          setError('You need a Guardian to block contacts')
+          return
+        }
+
+      } catch (err) {
+        console.error('Error checking user and guardian:', err)
+        setError('Failed to load page. Please refresh and try again.')
+      } finally {
+        setPageLoading(false)
+      }
+    }
+
+    checkUserAndGuardian()
+  }, [router])
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
@@ -90,7 +122,7 @@ export default function BlockContactPage() {
   }
 
   const handleSubmit = async () => {
-    if (!validateStep(3)) {
+    if (!validateStep(3) || !user) {
       setError('Please complete all required fields.')
       return
     }
@@ -99,20 +131,78 @@ export default function BlockContactPage() {
     setError('')
 
     try {
-      // Mock user ID - replace with actual user context
-      const userId = 'mock-user-id'
-      
-      await blockContact(userId, formData)
+      // Block the contact using the real database function
+      await blockContact(user.id, {
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        relationship: formData.relationship,
+        reason: formData.reason,
+        platforms: formData.platforms,
+        severity: formData.severity
+      })
       
       setSuccess(true)
     } catch (err) {
-      setError('Failed to block contact. Please try again.')
+      setError(err.message || 'Failed to block contact. Please try again.')
       console.error('Block contact error:', err)
     } finally {
       setLoading(false)
     }
   }
 
+  // Loading state while checking authentication and Guardian
+  if (pageLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    )
+  }
+
+  // No Guardian state
+  if (!guardian) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="bg-yellow-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+            <Heart className="h-10 w-10 text-yellow-600" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Guardian Required</h1>
+          <p className="text-gray-600 mb-8 text-lg">
+            You need to add a Guardian before you can block contacts. Your Guardian helps ensure you make thoughtful decisions about unblocking.
+          </p>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+            <h3 className="font-semibold text-blue-900 mb-2">Why do I need a Guardian?</h3>
+            <div className="text-blue-800 text-sm space-y-2">
+              <p>• Guardians help prevent impulsive unblocking when you're emotionally vulnerable</p>
+              <p>• They provide accountability and support for your digital wellbeing goals</p>
+              <p>• Only your Guardian can approve unblock requests, ensuring healthy boundaries</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <button 
+              onClick={() => router.push('/guardian/add')}
+              className="w-full bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 flex items-center justify-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Guardian
+            </button>
+            <button 
+              onClick={() => router.push('/dashboard')}
+              className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200"
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Success state
   if (success) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
@@ -129,9 +219,9 @@ export default function BlockContactPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
             <h3 className="font-semibold text-blue-900 mb-2">What happens next?</h3>
             <div className="text-blue-800 text-sm space-y-2">
-              <p>• Your Guardian will be notified of this new block</p>
-              <p>• {"If you want to unblock, you'll need Guardian approval"}</p>
-              <p>• {"We'll track your progress and celebrate milestones"}</p>
+              <p>• Your Guardian ({guardian.guardian_name}) has been notified of this new block</p>
+              <p>• If you want to unblock, you'll need Guardian approval through the app</p>
+              <p>• We'll track your progress and celebrate milestones</p>
             </div>
           </div>
 
@@ -150,7 +240,7 @@ export default function BlockContactPage() {
               Block Another Contact
             </button>
             <button 
-              onClick={() => window.location.href = '/dashboard'}
+              onClick={() => router.push('/dashboard')}
               className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200"
             >
               Return to Dashboard
@@ -166,7 +256,7 @@ export default function BlockContactPage() {
       {/* Header */}
       <div className="flex items-center mb-8">
         <button 
-          onClick={() => step > 1 ? setStep(step - 1) : window.history.back()}
+          onClick={() => step > 1 ? setStep(step - 1) : router.back()}
           className="mr-4 p-2 hover:bg-gray-100 rounded-lg"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -180,11 +270,26 @@ export default function BlockContactPage() {
         </div>
       </div>
 
+      {/* Guardian Info Banner */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center">
+          <Heart className="h-5 w-5 text-green-600 mr-2" />
+          <div>
+            <p className="text-green-800 text-sm font-medium">
+              Guardian Protection Active: {guardian.guardian_name}
+            </p>
+            <p className="text-green-700 text-xs">
+              Only they can approve unblock requests for your safety
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex items-center">
           {[1, 2, 3, 4].map((stepNum) => (
-            <React.Fragment key={stepNum}>
+            <div key={stepNum} className="flex items-center">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
                 stepNum <= step ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
               }`}>
@@ -195,7 +300,7 @@ export default function BlockContactPage() {
                   stepNum < step ? 'bg-indigo-600' : 'bg-gray-200'
                 }`} />
               )}
-            </React.Fragment>
+            </div>
           ))}
         </div>
         <div className="flex justify-between text-xs text-gray-500 mt-2">
@@ -463,6 +568,11 @@ export default function BlockContactPage() {
               <h3 className="font-medium text-gray-900">Reason</h3>
               <p className="text-gray-600 text-sm">{formData.reason}</p>
             </div>
+
+            <div>
+              <h3 className="font-medium text-gray-900">Guardian</h3>
+              <p className="text-gray-600 text-sm">{guardian.guardian_name} will control unblock decisions</p>
+            </div>
           </div>
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -471,7 +581,7 @@ export default function BlockContactPage() {
               <div>
                 <h3 className="text-sm font-medium text-yellow-800">Important</h3>
                 <p className="text-sm text-yellow-700 mt-1">
-                  {"Once blocked, only your Guardian can approve unblocking this contact. Make sure you're ready to commit to this boundary."}
+                  Once blocked, only {guardian.guardian_name} can approve unblocking this contact. Make sure you're ready to commit to this boundary.
                 </p>
               </div>
             </div>
