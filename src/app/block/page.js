@@ -176,7 +176,7 @@ export default function BlockContactPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
             <h3 className="font-semibold text-blue-900 mb-2">Why do I need a Guardian?</h3>
             <div className="text-blue-800 text-sm space-y-2">
-              <p>• Guardians help prevent impulsive unblocking when you're emotionally vulnerable</p>
+              <p>• {"Guardians help prevent impulsive unblocking when you're emotionally vulnerable"}</p>
               <p>• They provide accountability and support for your digital wellbeing goals</p>
               <p>• Only your Guardian can approve unblock requests, ensuring healthy boundaries</p>
             </div>
@@ -220,8 +220,8 @@ export default function BlockContactPage() {
             <h3 className="font-semibold text-blue-900 mb-2">What happens next?</h3>
             <div className="text-blue-800 text-sm space-y-2">
               <p>• Your Guardian ({guardian.guardian_name}) has been notified of this new block</p>
-              <p>• If you want to unblock, you'll need Guardian approval through the app</p>
-              <p>• We'll track your progress and celebrate milestones</p>
+              <p>• {"If you want to unblock, you'll need Guardian approval through the app"}</p>
+              <p>• {"We'll track your progress and celebrate milestones"}</p>
             </div>
           </div>
 
@@ -581,7 +581,7 @@ export default function BlockContactPage() {
               <div>
                 <h3 className="text-sm font-medium text-yellow-800">Important</h3>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Once blocked, only {guardian.guardian_name} can approve unblocking this contact. Make sure you're ready to commit to this boundary.
+                  Once blocked, only {guardian.guardian_name} can approve unblocking this contact. {"Make sure you're ready to commit to this boundary."}
                 </p>
               </div>
             </div>

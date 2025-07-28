@@ -244,7 +244,7 @@ export default function UnblockRequestPage() {
             <div className="text-blue-800 text-sm space-y-2">
               <p>• {guardian?.guardian_name} will receive an email with your request details</p>
               <p>• They can approve, deny, or ask for more time to consider</p>
-              <p>• You'll be notified of their decision via email and in the app</p>
+              <p>• {"You'll be notified of their decision via email and in the app"}</p>
               <p>• Check your dashboard for request status updates</p>
             </div>
           </div>
@@ -350,7 +350,7 @@ export default function UnblockRequestPage() {
             <h2 className="text-2xl font-semibold mb-4">Cooling-Off Period</h2>
             <p className="text-gray-600 mb-6">
               Take a moment to reflect before requesting to unblock {contact?.contact_name}. 
-              This pause helps ensure you're making a thoughtful decision.
+              {"This pause helps ensure you're making a thoughtful decision."}
             </p>
           </div>
 
@@ -552,7 +552,7 @@ export default function UnblockRequestPage() {
                 <h3 className="text-sm font-medium text-yellow-800">Remember</h3>
                 <p className="text-sm text-yellow-700 mt-1">
                   Your Guardian cares about your wellbeing. They may ask questions or suggest waiting longer. 
-                  Trust their judgment - they're here to help you make healthy decisions.
+                  {"Trust their judgment - they're here to help you make healthy decisions."}
                 </p>
               </div>
             </div>

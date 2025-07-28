@@ -111,14 +111,14 @@ export default function AddGuardianPage() {
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Guardian Added Successfully!</h1>
           <p className="text-gray-600 mb-8 text-lg">
-            {formData.name} has been added as your Guardian. They'll receive an email explaining their role.
+            {formData.name} has been added as your Guardian. {"They'll receive an email explaining their role."}
           </p>
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
             <h3 className="font-semibold text-blue-900 mb-2">What happens next?</h3>
             <div className="text-blue-800 text-sm space-y-2">
               <p>• {formData.name} will receive an email explaining their Guardian role</p>
-              <p>• They'll get instructions on how to respond to your unblock requests</p>
+              <p>• {"They'll get instructions on how to respond to your unblock requests"}</p>
               <p>• You can now start blocking contacts with Guardian protection</p>
             </div>
           </div>
@@ -197,13 +197,13 @@ export default function AddGuardianPage() {
           <div>
             <h2 className="text-xl font-semibold mb-4">Who is your Guardian?</h2>
             <p className="text-gray-600 mb-6">
-              Choose someone you trust completely. They'll help you make healthy decisions about unblocking contacts when you're emotionally vulnerable.
+              {"Choose someone you trust completely. They'll help you make healthy decisions about unblocking contacts when you're emotionally vulnerable."}
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Guardian's Full Name *
+              {"Guardian's Full Name *"}
             </label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
@@ -220,7 +220,7 @@ export default function AddGuardianPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Guardian's Email Address *
+              {"Guardian's Email Address *"}
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
@@ -234,7 +234,7 @@ export default function AddGuardianPage() {
               />
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              They'll receive an email explaining their Guardian role
+              {"They'll receive an email explaining their Guardian role"}
             </p>
           </div>
 
@@ -324,8 +324,8 @@ export default function AddGuardianPage() {
                 <h3 className="text-sm font-medium text-yellow-800">Guardian Responsibilities</h3>
                 <p className="text-sm text-yellow-700 mt-1">
                   Your Guardian will receive unblock requests via email with context about your situation. 
-                  They can approve, deny, or suggest alternatives. They're not responsible for your actions, 
-                  but they're committing to help you make thoughtful decisions.
+                  {"They can approve, deny, or suggest alternatives. They're not responsible for your actions, "}
+                  {"but they're committing to help you make thoughtful decisions."}
                 </p>
               </div>
             </div>
