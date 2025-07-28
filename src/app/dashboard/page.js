@@ -14,27 +14,24 @@ export default function Dashboard() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user is authenticated
     const checkUser = async () => {
       try {
         const { data: { user }, error } = await supabase.auth.getUser()
-        
+
         if (error || !user) {
           router.push('/auth/login')
           return
         }
-        
+
         setUser(user)
-        
-        // Load user data
+
         const [contactsData, guardianData] = await Promise.all([
           getBlockedContacts(user.id),
           getUserGuardian(user.id)
         ])
-        
+
         setBlockedContacts(contactsData)
         setGuardian(guardianData)
-        
       } catch (err) {
         console.error('Error loading dashboard:', err)
         setError('Failed to load dashboard data')
@@ -46,7 +43,6 @@ export default function Dashboard() {
     checkUser()
   }, [router])
 
-  // Calculate days since blocking
   const calculateDaysSince = (blockedDate) => {
     const blocked = new Date(blockedDate)
     const today = new Date()
@@ -55,7 +51,6 @@ export default function Dashboard() {
     return diffDays
   }
 
-  // Calculate impulse-free streak (simplified - you'd want more sophisticated logic)
   const calculateStreak = () => {
     if (blockedContacts.length === 0) return 0
     const oldestBlock = blockedContacts.reduce((oldest, contact) => {
@@ -81,7 +76,7 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">{error}</p>
           <button 
@@ -98,14 +93,14 @@ export default function Dashboard() {
   const impulseFreeStreak = calculateStreak()
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600">Welcome back, {user?.email}</p>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center justify-start sm:justify-end gap-4">
           <div className="flex items-center space-x-2">
             <Shield className="h-6 w-6 text-indigo-600" />
             <span className="text-lg font-medium">Shush</span>
@@ -121,8 +116,8 @@ export default function Dashboard() {
 
       {/* Progress Card */}
       <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg p-6 mb-8">
-        <div className="flex items-center">
-          <CheckCircle className="h-8 w-8 text-green-600 mr-4" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <CheckCircle className="h-8 w-8 text-green-600" />
           <div>
             <h3 className="text-xl font-semibold text-green-800">
               {impulseFreeStreak} Days Impulse-Free!
@@ -137,7 +132,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Actions */}
         <div className="lg:col-span-2 space-y-6">
           {/* Quick Actions */}
@@ -163,7 +158,7 @@ export default function Dashboard() {
 
           {/* Blocked Contacts Preview */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
               <h2 className="text-xl font-semibold">Recent Blocks</h2>
               <button 
                 onClick={() => router.push('/blocked')}
@@ -183,7 +178,7 @@ export default function Dashboard() {
               <div className="space-y-4">
                 {blockedContacts.slice(0, 2).map((contact) => (
                   <div key={contact.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900">{contact.contact_name}</h3>
                         <p className="text-sm text-gray-600 mt-1">{contact.reason}</p>
@@ -198,7 +193,7 @@ export default function Dashboard() {
                         Request Unblock
                       </button>
                     </div>
-                    <div className="flex space-x-2 mt-3">
+                    <div className="flex flex-wrap gap-2 mt-3">
                       {contact.platforms.map((platform, index) => (
                         <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
                           {platform}
@@ -280,25 +275,17 @@ export default function Dashboard() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold mb-4">Your Progress</h2>
             <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-sm">
-                  <span>Impulse-free streak</span>
-                  <span className="font-medium">{impulseFreeStreak} days</span>
-                </div>
+              <div className="flex justify-between text-sm">
+                <span>Impulse-free streak</span>
+                <span className="font-medium">{impulseFreeStreak} days</span>
               </div>
-              <div>
-                <div className="flex justify-between text-sm">
-                  <span>Total contacts blocked</span>
-                  <span className="font-medium">{blockedContacts.length}</span>
-                </div>
+              <div className="flex justify-between text-sm">
+                <span>Total contacts blocked</span>
+                <span className="font-medium">{blockedContacts.length}</span>
               </div>
-              <div>
-                <div className="flex justify-between text-sm">
-                  <span>Guardian status</span>
-                  <span className="font-medium">
-                    {guardian ? 'Active' : 'Not set'}
-                  </span>
-                </div>
+              <div className="flex justify-between text-sm">
+                <span>Guardian status</span>
+                <span className="font-medium">{guardian ? 'Active' : 'Not set'}</span>
               </div>
             </div>
           </div>
