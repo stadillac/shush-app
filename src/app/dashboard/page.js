@@ -153,6 +153,13 @@ export default function Dashboard() {
                 <Users className="h-5 w-5 mr-2" />
                 View Blocked Contacts ({blockedContacts.length})
               </button>
+              <button 
+                onClick={() => router.push('/dashboard/test-blocking')}
+                className="w-full bg-purple-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-600 transition-colors flex items-center justify-center border-2 border-purple-300"
+              >
+                {/* <TestTube className="h-5 w-5 mr-2" /> */}
+                Test Blocking System
+              </button>
             </div>
           </div>
 
@@ -273,7 +280,7 @@ export default function Dashboard() {
 
           {/* Stats */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">Your Progress</h2>
+            <h2 className="text-xl font-semibold mb-4 text-gray-900">Your Progress</h2>
             <div className="space-y-3 text-gray-900">
               <div className="flex justify-between text-sm">
                 <span>Impulse-free streak</span>
