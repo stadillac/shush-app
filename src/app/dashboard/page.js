@@ -98,7 +98,7 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {user?.email}</p>
+          <p className="text-gray-800">Welcome back, {user?.email}</p>
         </div>
         <div className="flex flex-wrap items-center justify-start sm:justify-end gap-4">
           <div className="flex items-center space-x-2">
@@ -107,7 +107,7 @@ export default function Dashboard() {
           </div>
           <button 
             onClick={handleSignOut}
-            className="text-sm text-gray-600 hover:text-gray-800"
+            className="text-sm text-gray-800 hover:text-gray-800"
           >
             Sign Out
           </button>
@@ -181,7 +181,7 @@ export default function Dashboard() {
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900">{contact.contact_name}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{contact.reason}</p>
+                        <p className="text-sm text-gray-800 mt-1">{contact.reason}</p>
                         <p className="text-xs text-gray-500 mt-1">
                           {calculateDaysSince(contact.blocked_at)} days ago
                         </p>

@@ -118,7 +118,7 @@ export default function SignupPage() {
             <h1 className="text-3xl font-bold text-gray-900">Shush</h1>
           </div>
           <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-800">
             Already have an account?{' '}
             <Link href="/auth/login" className="font-medium text-indigo-600 hover:text-indigo-500">
               Sign in

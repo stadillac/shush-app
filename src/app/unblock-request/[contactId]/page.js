@@ -214,7 +214,7 @@ export default function UnblockRequestPage() {
             <AlertTriangle className="h-10 w-10 text-red-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Unable to Process Request</h1>
-          <p className="text-gray-600 mb-8">{error}</p>
+          <p className="text-gray-800 mb-8">{error}</p>
           <button 
             onClick={() => router.push('/dashboard')}
             className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700"
@@ -235,7 +235,7 @@ export default function UnblockRequestPage() {
             <CheckCircle className="h-10 w-10 text-green-600" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Request Sent Successfully</h1>
-          <p className="text-gray-600 mb-8 text-lg">
+          <p className="text-gray-800 mb-8 text-lg">
             Your unblock request for {contact?.contact_name} has been sent to {guardian?.guardian_name}.
           </p>
           
@@ -282,7 +282,7 @@ export default function UnblockRequestPage() {
           <Shield className="h-8 w-8 text-orange-600 mr-3" />
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Unblock Request</h1>
-            <p className="text-gray-600">Step {step} of 3</p>
+            <p className="text-gray-800">Step {step} of 3</p>
           </div>
         </div>
       </div>
@@ -293,7 +293,7 @@ export default function UnblockRequestPage() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-medium text-gray-900">{contact.contact_name}</h3>
-              <p className="text-sm text-gray-600">{contact.reason}</p>
+              <p className="text-sm text-gray-800">{contact.reason}</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-gray-500">Blocked {new Date(contact.blocked_at).toLocaleDateString()}</p>
@@ -315,7 +315,7 @@ export default function UnblockRequestPage() {
           {[1, 2, 3].map((stepNum) => (
             <div key={stepNum} className="flex items-center">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                stepNum <= step ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-600'
+                stepNum <= step ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-800'
               }`}>
                 {stepNum}
               </div>
@@ -348,7 +348,7 @@ export default function UnblockRequestPage() {
               <Clock className="h-10 w-10 text-blue-600" />
             </div>
             <h2 className="text-2xl font-semibold mb-4">Cooling-Off Period</h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-800 mb-6">
               Take a moment to reflect before requesting to unblock {contact?.contact_name}. 
               {"This pause helps ensure you're making a thoughtful decision."}
             </p>
@@ -405,7 +405,7 @@ export default function UnblockRequestPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold mb-4">How are you feeling?</h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-800 mb-6">
               Your Guardian needs to understand your emotional state to help you make the best decision.
             </p>
           </div>
@@ -433,7 +433,7 @@ export default function UnblockRequestPage() {
                       {mood.label}
                     </h3>
                     <p className={`text-xs ${
-                      requestData.mood === mood.value ? 'text-orange-700' : 'text-gray-600'
+                      requestData.mood === mood.value ? 'text-orange-700' : 'text-gray-800'
                     }`}>
                       {mood.description}
                     </p>
@@ -479,7 +479,7 @@ export default function UnblockRequestPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold mb-4">Submit Your Request</h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-800 mb-6">
               Review your request before sending it to {guardian?.guardian_name}.
             </p>
           </div>
@@ -504,7 +504,7 @@ export default function UnblockRequestPage() {
                       <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${level.color}`}>
                         {level.label}
                       </span>
-                      <p className="text-sm text-gray-600 mt-1">{level.description}</p>
+                      <p className="text-sm text-gray-800 mt-1">{level.description}</p>
                     </div>
                     <div className={`w-5 h-5 rounded-full border-2 ${
                       requestData.urgency === level.value

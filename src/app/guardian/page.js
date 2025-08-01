@@ -184,7 +184,7 @@ export default function GuardianManagementPage() {
           <Heart className="h-8 w-8 text-red-500 mr-3" />
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Your Guardians</h1>
-            <p className="text-gray-600">Manage the people who help protect your digital boundaries</p>
+            <p className="text-gray-800">Manage the people who help protect your digital boundaries</p>
           </div>
         </div>
         {canAddMore && (
@@ -212,7 +212,7 @@ export default function GuardianManagementPage() {
               <Shield className="h-6 w-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm text-gray-600">Active Guardians</p>
+              <p className="text-sm text-gray-800">Active Guardians</p>
               <p className="text-2xl font-bold text-gray-900">{activeGuardians.length}</p>
             </div>
           </div>
@@ -224,7 +224,7 @@ export default function GuardianManagementPage() {
               <MessageSquare className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm text-gray-600">Total Requests Handled</p>
+              <p className="text-sm text-gray-800">Total Requests Handled</p>
               <p className="text-2xl font-bold text-gray-900">
                 {guardians.reduce((sum, g) => sum + g.requests_handled, 0)}
               </p>
@@ -238,7 +238,7 @@ export default function GuardianManagementPage() {
               <Clock className="h-6 w-6 text-yellow-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm text-gray-600">Pending Invitations</p>
+              <p className="text-sm text-gray-800">Pending Invitations</p>
               <p className="text-2xl font-bold text-gray-900">{pendingGuardians.length}</p>
             </div>
           </div>
@@ -250,7 +250,7 @@ export default function GuardianManagementPage() {
         <div className="bg-white rounded-lg shadow-sm p-8 text-center">
           <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">No Guardians Yet</h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-800 mb-6">
             Add trusted people to help you maintain healthy digital boundaries. 
             Guardians help you make thoughtful decisions about unblocking contacts.
           </p>
@@ -273,7 +273,7 @@ export default function GuardianManagementPage() {
               >
                 <div className="flex items-center space-x-4">
                   <div className="bg-gray-100 p-3 rounded-lg">
-                    <User className="h-6 w-6 text-gray-600" />
+                    <User className="h-6 w-6 text-gray-800" />
                   </div>
                   <div>
                     <div className="flex items-center space-x-2">
@@ -285,7 +285,7 @@ export default function GuardianManagementPage() {
                       )}
                     </div>
                     <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-gray-600 text-sm">{getRelationshipLabel(g.relationship_type)}</span>
+                      <span className="text-gray-800 text-sm">{getRelationshipLabel(g.relationship_type)}</span>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${status.color}`}>
                         <status.icon className="h-3 w-3 mr-1" />
                         {status.text}
@@ -294,7 +294,7 @@ export default function GuardianManagementPage() {
                   </div>
                 </div>
                 <div className="mt-4 md:mt-0 flex flex-col md:flex-row md:items-center md:space-x-6">
-                  <div className="flex flex-col space-y-1 text-sm text-gray-600 mb-2 md:mb-0">
+                  <div className="flex flex-col space-y-1 text-sm text-gray-800 mb-2 md:mb-0">
                     <span className="flex items-center">
                       <Mail className="h-4 w-4 mr-1" /> {g.guardian_email}
                     </span>

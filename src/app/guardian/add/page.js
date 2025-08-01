@@ -110,7 +110,7 @@ export default function AddGuardianPage() {
             <CheckCircle className="h-10 w-10 text-green-600" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Guardian Added Successfully!</h1>
-          <p className="text-gray-600 mb-8 text-lg">
+          <p className="text-gray-800 mb-8 text-lg">
             {formData.name} has been added as your Guardian. {"They'll receive an email explaining their role."}
           </p>
           
@@ -156,7 +156,7 @@ export default function AddGuardianPage() {
           <Heart className="h-8 w-8 text-red-500 mr-3" />
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Add Guardian</h1>
-            <p className="text-gray-600">Step {step} of 2</p>
+            <p className="text-gray-800">Step {step} of 2</p>
           </div>
         </div>
       </div>
@@ -167,7 +167,7 @@ export default function AddGuardianPage() {
           {[1, 2].map((stepNum) => (
             <div key={stepNum} className="flex items-center">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                stepNum <= step ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-600'
+                stepNum <= step ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-800'
               }`}>
                 {stepNum}
               </div>
@@ -196,7 +196,7 @@ export default function AddGuardianPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold mb-4">Who is your Guardian?</h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-800 mb-6">
               {"Choose someone you trust completely. They'll help you make healthy decisions about unblocking contacts when you're emotionally vulnerable."}
             </p>
           </div>
@@ -261,7 +261,7 @@ export default function AddGuardianPage() {
                         {type.label}
                       </h3>
                       <p className={`text-sm ${
-                        formData.relationship === type.value ? 'text-red-700' : 'text-gray-600'
+                        formData.relationship === type.value ? 'text-red-700' : 'text-gray-800'
                       }`}>
                         {type.description}
                       </p>
@@ -295,7 +295,7 @@ export default function AddGuardianPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold mb-4">Personal Message to {formData.name}</h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-800 mb-6">
               Write a personal message explaining why you chose them and what this role means to you. This will be included in their Guardian invitation email.
             </p>
           </div>
