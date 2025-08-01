@@ -137,7 +137,7 @@ export default function Dashboard() {
         <div className="lg:col-span-2 space-y-6">
           {/* Quick Actions */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+            <h2 className="text-xl font-semibold mb-4 text-gray-900">Quick Actions</h2>
             <div className="space-y-3">
               <button 
                 onClick={() => router.push('/block')}
@@ -211,7 +211,7 @@ export default function Dashboard() {
         <div className="space-y-6">
           {/* Guardian Info */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-900">
               <Heart className="h-5 w-5 text-red-500 mr-2" />
               Your Guardian
             </h2>
@@ -251,7 +251,7 @@ export default function Dashboard() {
 
           {/* Crisis Resources */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-900">
               <AlertTriangle className="h-5 w-5 text-orange-500 mr-2" />
               Need Help?
             </h2>
@@ -274,7 +274,7 @@ export default function Dashboard() {
           {/* Stats */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold mb-4">Your Progress</h2>
-            <div className="space-y-3">
+            <div className="space-y-3 text-gray-900">
               <div className="flex justify-between text-sm">
                 <span>Impulse-free streak</span>
                 <span className="font-medium">{impulseFreeStreak} days</span>
