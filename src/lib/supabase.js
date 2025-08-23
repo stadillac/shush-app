@@ -749,3 +749,472 @@ export function validateGuardianData(guardianData) {
     errors
   }
 }
+
+// Add these functions to your src/lib/supabase.js file
+
+// ============================================
+// GUARDIAN DASHBOARD FUNCTIONS
+// ============================================
+
+/**
+ * Get all unblock requests for a specific guardian
+ * @param {string} guardianEmail - The guardian's email address
+ * @returns {Array} Array of unblock requests with user and contact details
+ */
+export async function getGuardianRequests(guardianEmail) {
+  try {
+    const { data, error } = await supabase
+      .from('unblock_requests')
+      .select(`
+        *,
+        blocked_contacts (
+          contact_name,
+          contact_phone,
+          contact_email,
+          relationship_type,
+          reason,
+          platforms,
+          severity,
+          blocked_at
+        ),
+        profiles (
+          full_name,
+          email
+        )
+      `)
+      .eq('guardian_email', guardianEmail.toLowerCase())
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching guardian requests:', error)
+      return []
+    }
+    
+    // Transform data to match dashboard expectations
+    const transformedData = data?.map(request => ({
+      id: request.id,
+      user_name: request.profiles?.full_name || 'Anonymous User',
+      user_email: request.profiles?.email || '',
+      contact_name: request.blocked_contacts?.contact_name || 'Unknown Contact',
+      contact_relationship: request.blocked_contacts?.relationship_type || 'Unknown',
+      blocked_reason: request.blocked_contacts?.reason || '',
+      platforms: request.blocked_contacts?.platforms || [],
+      blocked_date: request.blocked_contacts?.blocked_at,
+      request_date: request.created_at,
+      current_mood: request.current_mood,
+      journal_entry: request.journal_entry,
+      additional_context: request.additional_context,
+      urgency: request.urgency || 'normal',
+      status: request.status,
+      severity: request.blocked_contacts?.severity || 'medium',
+      guardian_response: request.guardian_response,
+      response_date: request.guardian_responded_at
+    })) || []
+    
+    return transformedData
+  } catch (err) {
+    console.error('Unexpected error in getGuardianRequests:', err)
+    return []
+  }
+}
+
+/**
+ * Respond to an unblock request as a guardian
+ * @param {string} requestId - The unblock request ID
+ * @param {string} response - 'approved' or 'denied'
+ * @param {string} message - Guardian's response message
+ * @param {string} guardianEmail - The guardian's email for verification
+ * @returns {Object} Updated request data
+ */
+export async function respondToUnblockRequest(requestId, response, message, guardianEmail) {
+  try {
+    // Validate response
+    if (!['approved', 'denied'].includes(response)) {
+      throw new Error('Response must be either "approved" or "denied"')
+    }
+
+    if (!message || message.trim().length < 10) {
+      throw new Error('Guardian response message must be at least 10 characters')
+    }
+
+    // Verify the guardian has permission to respond to this request
+    const { data: existingRequest, error: fetchError } = await supabase
+      .from('unblock_requests')
+      .select('id, guardian_email, status, user_id, blocked_contact_id')
+      .eq('id', requestId)
+      .eq('guardian_email', guardianEmail.toLowerCase())
+      .single()
+
+    if (fetchError || !existingRequest) {
+      throw new Error('Request not found or you do not have permission to respond')
+    }
+
+    if (existingRequest.status !== 'pending') {
+      throw new Error('This request has already been responded to')
+    }
+
+    // Update the request with guardian response
+    const { data, error } = await supabase
+      .from('unblock_requests')
+      .update({
+        status: response,
+        guardian_response: message.trim(),
+        guardian_responded_at: new Date().toISOString()
+      })
+      .eq('id', requestId)
+      .select()
+
+    if (error) {
+      console.error('Error responding to unblock request:', error)
+      throw error
+    }
+
+    // If approved, we need to actually unblock the contact
+    if (response === 'approved') {
+      await supabase
+        .from('blocked_contacts')
+        .update({ 
+          status: 'inactive',
+          unblocked_at: new Date().toISOString(),
+          unblock_reason: 'guardian_approved'
+        })
+        .eq('id', existingRequest.blocked_contact_id)
+    }
+
+    // Log the guardian action
+    await logUserAction(existingRequest.user_id, 'guardian_response', {
+      request_id: requestId,
+      guardian_email: guardianEmail,
+      response: response,
+      message_length: message.length
+    })
+
+    // In a real app, send notification email to user here
+    // await sendUnblockResponseEmail(existingRequest.user_id, response, message)
+
+    return data[0]
+  } catch (err) {
+    console.error('Unexpected error in respondToUnblockRequest:', err)
+    throw err
+  }
+}
+
+/**
+ * Get statistics for a guardian's dashboard
+ * @param {string} guardianEmail - The guardian's email address
+ * @returns {Object} Guardian statistics
+ */
+export async function getGuardianDashboardStats(guardianEmail) {
+  try {
+    // Get all requests for this guardian
+    const { data: requests, error: requestsError } = await supabase
+      .from('unblock_requests')
+      .select('status, created_at, guardian_responded_at, user_id')
+      .eq('guardian_email', guardianEmail.toLowerCase())
+
+    if (requestsError) {
+      console.error('Error fetching guardian stats:', requestsError)
+      return getEmptyGuardianStats()
+    }
+
+    // Get unique users this guardian helps
+    const uniqueUsers = new Set(requests?.map(r => r.user_id) || [])
+
+    // Calculate response times for completed requests
+    const completedRequests = requests?.filter(r => 
+      r.guardian_responded_at && r.created_at
+    ) || []
+
+    let averageResponseTime = '0 hours'
+    if (completedRequests.length > 0) {
+      const responseTimes = completedRequests.map(r => {
+        const created = new Date(r.created_at)
+        const responded = new Date(r.guardian_responded_at)
+        return (responded - created) / (1000 * 60 * 60) // hours
+      })
+      
+      const avgHours = responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
+      
+      if (avgHours < 1) {
+        averageResponseTime = `${Math.round(avgHours * 60)} minutes`
+      } else if (avgHours < 24) {
+        averageResponseTime = `${Math.round(avgHours)} hours`
+      } else {
+        averageResponseTime = `${Math.round(avgHours / 24)} days`
+      }
+    }
+
+    // Calculate guardian streak (days since first request)
+    let streak = 0
+    if (requests && requests.length > 0) {
+      const oldestRequest = requests.reduce((oldest, current) => {
+        return new Date(current.created_at) < new Date(oldest.created_at) ? current : oldest
+      })
+      
+      const daysSinceFirst = Math.floor(
+        (new Date() - new Date(oldestRequest.created_at)) / (1000 * 60 * 60 * 24)
+      )
+      streak = daysSinceFirst
+    }
+
+    const stats = {
+      totalUsers: uniqueUsers.size,
+      totalRequests: requests?.length || 0,
+      approvedRequests: requests?.filter(r => r.status === 'approved').length || 0,
+      deniedRequests: requests?.filter(r => r.status === 'denied').length || 0,
+      pendingRequests: requests?.filter(r => r.status === 'pending').length || 0,
+      averageResponseTime,
+      streak
+    }
+
+    return stats
+  } catch (err) {
+    console.error('Unexpected error in getGuardianDashboardStats:', err)
+    return getEmptyGuardianStats()
+  }
+}
+
+/**
+ * Get guardian information and verify access
+ * @param {string} guardianEmail - The guardian's email address
+ * @returns {Object|null} Guardian info or null if not found
+ */
+export async function getGuardianInfo(guardianEmail) {
+  try {
+    const { data, error } = await supabase
+      .from('guardians')
+      .select(`
+        *,
+        profiles!guardians_user_id_fkey (
+          full_name,
+          email
+        )
+      `)
+      .eq('guardian_email', guardianEmail.toLowerCase())
+      .eq('status', 'active')
+
+    if (error || !data || data.length === 0) {
+      return null
+    }
+
+    // Transform to include all users this guardian helps
+    const guardianInfo = {
+      guardian_email: guardianEmail,
+      users: data.map(guardian => ({
+        user_id: guardian.user_id,
+        user_name: guardian.profiles?.full_name || 'Anonymous User',
+        user_email: guardian.profiles?.email,
+        relationship: guardian.relationship_type,
+        guardian_since: guardian.created_at
+      }))
+    }
+
+    return guardianInfo
+  } catch (err) {
+    console.error('Unexpected error in getGuardianInfo:', err)
+    return null
+  }
+}
+
+/**
+ * Get detailed request information for guardian review
+ * @param {string} requestId - The unblock request ID
+ * @param {string} guardianEmail - Guardian email for permission check
+ * @returns {Object|null} Detailed request information
+ */
+export async function getGuardianRequestDetails(requestId, guardianEmail) {
+  try {
+    const { data, error } = await supabase
+      .from('unblock_requests')
+      .select(`
+        *,
+        blocked_contacts (
+          *
+        ),
+        profiles (
+          full_name,
+          email
+        )
+      `)
+      .eq('id', requestId)
+      .eq('guardian_email', guardianEmail.toLowerCase())
+      .single()
+
+    if (error || !data) {
+      return null
+    }
+
+    // Get additional context like previous requests for this contact
+    const { data: previousRequests } = await supabase
+      .from('unblock_requests')
+      .select('status, created_at, guardian_response')
+      .eq('blocked_contact_id', data.blocked_contact_id)
+      .neq('id', requestId)
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    return {
+      ...data,
+      previous_requests: previousRequests || [],
+      blocked_duration_days: Math.floor(
+        (new Date(data.created_at) - new Date(data.blocked_contacts.blocked_at)) / 
+        (1000 * 60 * 60 * 24)
+      )
+    }
+  } catch (err) {
+    console.error('Unexpected error in getGuardianRequestDetails:', err)
+    return null
+  }
+}
+
+/**
+ * Update guardian notification preferences
+ * @param {string} guardianEmail - Guardian's email
+ * @param {Object} preferences - Notification preferences
+ */
+export async function updateGuardianPreferences(guardianEmail, preferences) {
+  try {
+    // This would update a guardian_preferences table if you have one
+    // For now, just log the action
+    console.log('Guardian preferences update requested:', {
+      guardian_email: guardianEmail,
+      preferences
+    })
+
+    // In a real implementation, you might store:
+    // - Email notification frequency
+    // - Response time reminders
+    // - Emergency contact preferences
+    // - Dashboard theme preferences
+
+    return { success: true }
+  } catch (err) {
+    console.error('Error updating guardian preferences:', err)
+    throw err
+  }
+}
+
+/**
+ * Helper function to return empty stats when there's an error
+ */
+function getEmptyGuardianStats() {
+  return {
+    totalUsers: 0,
+    totalRequests: 0,
+    approvedRequests: 0,
+    deniedRequests: 0,
+    pendingRequests: 0,
+    averageResponseTime: '0 hours',
+    streak: 0
+  }
+}
+
+// ============================================
+// GUARDIAN EMAIL NOTIFICATIONS
+// ============================================
+
+/**
+ * Send email notification to user about guardian response
+ * @param {string} userId - User ID
+ * @param {string} response - 'approved' or 'denied'
+ * @param {string} message - Guardian's message
+ */
+export async function sendUnblockResponseEmail(userId, response, message) {
+  // Placeholder for email notification
+  // In a real app, integrate with SendGrid, AWS SES, or similar
+  console.log('Unblock response email would be sent:', {
+    userId,
+    response,
+    message: message.substring(0, 50) + '...'
+  })
+  
+  return true
+}
+
+/**
+ * Send emergency notification to guardian
+ * @param {string} guardianEmail - Guardian's email
+ * @param {Object} emergencyData - Emergency request data
+ */
+export async function sendEmergencyNotification(guardianEmail, emergencyData) {
+  // Placeholder for emergency notification
+  // Would send immediate notification for high-priority requests
+  console.log('Emergency notification would be sent to:', guardianEmail)
+  
+  return true
+}
+
+// ============================================
+// GUARDIAN ANALYTICS
+// ============================================
+
+/**
+ * Get guardian performance analytics
+ * @param {string} guardianEmail - Guardian's email
+ * @param {number} days - Number of days to look back (default 30)
+ */
+export async function getGuardianAnalytics(guardianEmail, days = 30) {
+  try {
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+
+    const { data, error } = await supabase
+      .from('unblock_requests')
+      .select('*')
+      .eq('guardian_email', guardianEmail.toLowerCase())
+      .gte('created_at', startDate.toISOString())
+
+    if (error) {
+      console.error('Error fetching guardian analytics:', error)
+      return null
+    }
+
+    // Calculate analytics
+    const analytics = {
+      period_days: days,
+      total_requests: data?.length || 0,
+      approved_rate: data?.length > 0 
+        ? Math.round((data.filter(r => r.status === 'approved').length / data.length) * 100) 
+        : 0,
+      average_response_time_hours: calculateAverageResponseTime(data || []),
+      mood_distribution: calculateMoodDistribution(data || []),
+      urgency_distribution: calculateUrgencyDistribution(data || [])
+    }
+
+    return analytics
+  } catch (err) {
+    console.error('Error calculating guardian analytics:', err)
+    return null
+  }
+}
+
+function calculateAverageResponseTime(requests) {
+  const responded = requests.filter(r => r.guardian_responded_at && r.created_at)
+  if (responded.length === 0) return 0
+
+  const totalHours = responded.reduce((sum, request) => {
+    const created = new Date(request.created_at)
+    const responded_at = new Date(request.guardian_responded_at)
+    return sum + ((responded_at - created) / (1000 * 60 * 60))
+  }, 0)
+
+  return Math.round(totalHours / responded.length * 10) / 10 // Round to 1 decimal
+}
+
+function calculateMoodDistribution(requests) {
+  const moods = {}
+  requests.forEach(request => {
+    const mood = request.current_mood || 'unknown'
+    moods[mood] = (moods[mood] || 0) + 1
+  })
+  return moods
+}
+
+function calculateUrgencyDistribution(requests) {
+  const urgencies = {}
+  requests.forEach(request => {
+    const urgency = request.urgency || 'normal'
+    urgencies[urgency] = (urgencies[urgency] || 0) + 1
+  })
+  return urgencies
+}
