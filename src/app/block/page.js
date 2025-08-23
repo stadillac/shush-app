@@ -169,7 +169,7 @@ export default function BlockContactPage() {
             <Heart className="h-10 w-10 text-yellow-600" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Guardian Required</h1>
-          <p className="text-gray-600 mb-8 text-lg">
+          <p className="text-gray-800 mb-8 text-lg">
             You need to add a Guardian before you can block contacts. Your Guardian helps ensure you make thoughtful decisions about unblocking.
           </p>
           
@@ -211,7 +211,7 @@ export default function BlockContactPage() {
             <CheckCircle className="h-10 w-10 text-green-600" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Contact Successfully Blocked</h1>
-          <p className="text-gray-600 mb-8 text-lg">
+          <p className="text-gray-800 mb-8 text-lg">
             {formData.name} has been blocked across {formData.platforms.length} platform{formData.platforms.length !== 1 ? 's' : ''}. 
             You can only unblock them through your Guardian.
           </p>
@@ -265,7 +265,7 @@ export default function BlockContactPage() {
           <Shield className="h-8 w-8 text-indigo-600 mr-3" />
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Block Contact</h1>
-            <p className="text-gray-600">Step {step} of 4</p>
+            <p className="text-gray-800">Step {step} of 4</p>
           </div>
         </div>
       </div>
@@ -291,7 +291,7 @@ export default function BlockContactPage() {
           {[1, 2, 3, 4].map((stepNum) => (
             <div key={stepNum} className="flex items-center">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                stepNum <= step ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
+                stepNum <= step ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-800'
               }`}>
                 {stepNum}
               </div>
@@ -322,7 +322,7 @@ export default function BlockContactPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
-            <p className="text-gray-600 mb-6">Tell us about the person you want to block.</p>
+            <p className="text-gray-800 mb-6">Tell us about the person you want to block.</p>
           </div>
 
           <div>
@@ -398,7 +398,7 @@ export default function BlockContactPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold mb-4">Select Platforms to Block</h2>
-            <p className="text-gray-600 mb-6">Choose where you want to block {formData.name}.</p>
+            <p className="text-gray-800 mb-6">Choose where you want to block {formData.name}.</p>
           </div>
 
           <div className="grid gap-4">
@@ -427,7 +427,7 @@ export default function BlockContactPage() {
                         {platform.name}
                       </h3>
                       <p className={`text-sm ${
-                        isSelected ? 'text-indigo-700' : 'text-gray-600'
+                        isSelected ? 'text-indigo-700' : 'text-gray-800'
                       }`}>
                         {platform.description}
                       </p>
@@ -461,7 +461,7 @@ export default function BlockContactPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold mb-4">Why are you blocking {formData.name}?</h2>
-            <p className="text-gray-600 mb-6">This helps your Guardian understand the context when you request unblocking.</p>
+            <p className="text-gray-800 mb-6">This helps your Guardian understand the context when you request unblocking.</p>
           </div>
 
           <div>
@@ -484,7 +484,7 @@ export default function BlockContactPage() {
                       <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${level.color}`}>
                         {level.label}
                       </span>
-                      <p className="text-sm text-gray-600 mt-1">{level.description}</p>
+                      <p className="text-sm text-gray-800 mt-1">{level.description}</p>
                     </div>
                     <div className={`w-5 h-5 rounded-full border-2 ${
                       formData.severity === level.value
@@ -532,13 +532,13 @@ export default function BlockContactPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold mb-4">Confirm Block Details</h2>
-            <p className="text-gray-600 mb-6">Review the information below before blocking.</p>
+            <p className="text-gray-800 mb-6">Review the information below before blocking.</p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-6 space-y-4">
             <div>
               <h3 className="font-medium text-gray-900">Contact</h3>
-              <p className="text-gray-600">{formData.name} ({formData.relationship})</p>
+              <p className="text-gray-800">{formData.name} ({formData.relationship})</p>
             </div>
 
             <div>
@@ -566,12 +566,12 @@ export default function BlockContactPage() {
 
             <div>
               <h3 className="font-medium text-gray-900">Reason</h3>
-              <p className="text-gray-600 text-sm">{formData.reason}</p>
+              <p className="text-gray-800 text-sm">{formData.reason}</p>
             </div>
 
             <div>
               <h3 className="font-medium text-gray-900">Guardian</h3>
-              <p className="text-gray-600 text-sm">{guardian.guardian_name} will control unblock decisions</p>
+              <p className="text-gray-800 text-sm">{guardian.guardian_name} will control unblock decisions</p>
             </div>
           </div>
 

@@ -289,7 +289,7 @@ export default function BlockingTestPage() {
               {blockedContacts.map((contact) => (
                 <div key={contact.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
-                    <div className="font-medium text-gray-800">{contact.contact_name}</div>
+                    <div className="font-medium ">{contact.contact_name}</div>
                     <div className="text-sm text-gray-800">{contact.contact_phone}</div>
                   </div>
                   <div className="flex space-x-2">
