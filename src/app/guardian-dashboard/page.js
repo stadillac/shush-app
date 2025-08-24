@@ -1,6 +1,6 @@
 // src/app/guardian-dashboard/page.js
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { 
   Heart, 
@@ -58,7 +58,7 @@ const getGuardianRequests = async (guardianEmail) => {
       request_date: '2024-01-21',
       current_mood: 'calm',
       journal_entry: 'I\'ve been thinking about Jessica and wondering if I was too harsh. Maybe I should give them another chance to explain their side.',
-      additional_context: 'Saw them at a mutual friend\s party and they seemed different.',
+      additional_context: 'Saw them at a mutual friend\'s party and they seemed different.',
       urgency: 'low',
       status: 'pending',
       severity: 'medium'
@@ -122,7 +122,8 @@ const getGuardianStats = async (guardianEmail) => {
   }
 }
 
-export default function GuardianDashboard() {
+// Component to handle search params with Suspense
+function GuardianDashboardContent() {
   const [requests, setRequests] = useState([])
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -354,7 +355,7 @@ export default function GuardianDashboard() {
             </h3>
             <p className="text-gray-500">
               {filter === 'pending' 
-                ? "You're all caught up! No pending requests need your attention."
+                ? "You\'re all caught up! No pending requests need your attention."
                 : `No ${filter} requests to display.`
               }
             </p>
@@ -409,16 +410,16 @@ export default function GuardianDashboard() {
                       <span className="font-medium">Why they blocked originally:</span>
                     </p>
                     <p className="text-sm text-gray-800 mb-3">
-                      &quot;{request.blocked_reason}&quot;
+                      "{request.blocked_reason}"
                     </p>
                     
                     <p className="text-sm text-gray-700 mb-2">
                       <span className="font-medium">Current thoughts:</span>
                     </p>
                     <p className="text-sm text-gray-800">
-                      &quot;{request.journal_entry.length > 150 
+                      "{request.journal_entry.length > 150 
                         ? request.journal_entry.substring(0, 150) + '...'
-                        : request.journal_entry}&quot;
+                        : request.journal_entry}"
                     </p>
                   </div>
 
@@ -448,7 +449,7 @@ export default function GuardianDashboard() {
                   {request.guardian_response && (
                     <div className="mt-4 bg-blue-50 rounded-lg p-4">
                       <p className="text-sm font-medium text-blue-800 mb-2">Your Response:</p>
-                      <p className="text-sm text-blue-700">&quot;{request.guardian_response}&quot;</p>
+                      <p className="text-sm text-blue-700">"{request.guardian_response}"</p>
                     </div>
                   )}
                 </div>
@@ -551,14 +552,14 @@ export default function GuardianDashboard() {
                     <div>
                       <h3 className="font-semibold text-gray-900 mb-2">Why was this contact originally blocked?</h3>
                       <p className="text-gray-700 bg-red-50 p-4 rounded-lg">
-                        &quot;{request.blocked_reason}&quot;
+                        \"{request.blocked_reason}\"
                       </p>
                     </div>
 
                     <div>
                       <h3 className="font-semibold text-gray-900 mb-2">Current thoughts and feelings:</h3>
                       <p className="text-gray-700 bg-blue-50 p-4 rounded-lg">
-                        &quot;{request.journal_entry}&quot;
+                        \"{request.journal_entry}\"
                       </p>
                     </div>
 
@@ -566,7 +567,7 @@ export default function GuardianDashboard() {
                       <div>
                         <h3 className="font-semibold text-gray-900 mb-2">Additional context:</h3>
                         <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
-                          &quot;{request.additional_context}&quot;
+                          \"{request.additional_context}\"
                         </p>
                       </div>
                     )}
@@ -631,7 +632,7 @@ export default function GuardianDashboard() {
                   {request.guardian_response && (
                     <div className="mt-8 p-4 bg-blue-50 rounded-lg">
                       <h3 className="font-semibold text-blue-900 mb-2">Your Previous Response:</h3>
-                      <p className="text-blue-800">&quot;{request.guardian_response}&quot;</p>
+                      <p className="text-blue-800">\"{request.guardian_response}\"</p>
                       <p className="text-blue-600 text-sm mt-2">
                         Responded on {new Date(request.response_date).toLocaleDateString()}
                       </p>
@@ -644,5 +645,23 @@ export default function GuardianDashboard() {
         </div>
       )}
     </div>
+  )
+}
+
+// Loading component for Suspense fallback
+function GuardianDashboardLoading() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+    </div>
+  )
+}
+
+// Main export with Suspense boundary
+export default function GuardianDashboard() {
+  return (
+    <Suspense fallback={<GuardianDashboardLoading />}>
+      <GuardianDashboardContent />
+    </Suspense>
   )
 }
