@@ -417,7 +417,7 @@ function GuardianDashboardContent() {
                       <span className="font-medium">Current thoughts:</span>
                     </p>
                     <p className="text-sm text-gray-800">
-                      "&quot;{request.journal_entry.length > 150 
+                      &quot;{request.journal_entry.length > 150 
                         ? request.journal_entry.substring(0, 150) + '...'
                         : request.journal_entry}&quot;
                     </p>
