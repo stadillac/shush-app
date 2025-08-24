@@ -75,7 +75,7 @@ export default function GuardianGuidePage() {
               <h3 className="text-lg font-semibold">Stay Supportive</h3>
             </div>
             <p className="text-gray-700">
-              Remember you're helping someone build healthier relationships. Be compassionate while maintaining healthy boundaries.
+              {"Remember you're helping someone build healthier relationships. Be compassionate while maintaining healthy boundaries."}
             </p>
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function GuardianGuidePage() {
               <li>• The original harm was severe (abuse, manipulation)</li>
               <li>• No real change in circumstances</li>
               <li>• Reconnecting could trigger relapse/harm</li>
-              <li>• They're seeking contact during crisis</li>
+              <li>• {"They're seeking contact during crisis"}</li>
             </ul>
           </div>
         </div>
@@ -150,21 +150,21 @@ export default function GuardianGuidePage() {
           <div className="bg-green-50 border border-green-200 rounded-lg p-6">
             <h3 className="text-green-800 font-semibold mb-3">Approval Response Example:</h3>
             <div className="bg-white p-4 rounded border text-gray-700 italic">
-              "I can see you've taken time to reflect and have grown since the blocking. Your reasons for wanting to reconnect seem healthy and well-thought-out. I approve this unblock, but please remember the boundaries you've learned and don't hesitate to re-block if needed. I'm proud of your progress."
+              {"'I can see you've taken time to reflect and have grown since the blocking. Your reasons for wanting to reconnect seem healthy and well-thought-out. I approve this unblock, but please remember the boundaries you've learned and don't hesitate to re-block if needed. I'm proud of your progress.'"}
             </div>
           </div>
 
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <h3 className="text-red-800 font-semibold mb-3">Denial Response Example:</h3>
             <div className="bg-white p-4 rounded border text-gray-700 italic">
-              "I understand you're feeling lonely right now, but remember why you blocked them originally - the constant manipulation was affecting your mental health. You're in a vulnerable state and might not see clearly. Let's wait another month and focus on building other supportive relationships first. You've made such good progress."
+              {"'I understand you're feeling lonely right now, but remember why you blocked them originally - the constant manipulation was affecting your mental health. You're in a vulnerable state and might not see clearly. Let's wait another month and focus on building other supportive relationships first. You've made such good progress.'"}
             </div>
           </div>
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
             <h3 className="text-yellow-800 font-semibold mb-3">Request for More Information:</h3>
             <div className="bg-white p-4 rounded border text-gray-700 italic">
-              "I need to understand better before making this decision. Can you tell me more about what's changed since you blocked them? Have you talked to your therapist about this? What specific outcome are you hoping for from reconnecting? Let's have a call this weekend to discuss."
+              {"'I need to understand better before making this decision. Can you tell me more about what's changed since you blocked them? Have you talked to your therapist about this? What specific outcome are you hoping for from reconnecting? Let's have a call this weekend to discuss.'"}
             </div>
           </div>
         </div>
@@ -225,7 +225,7 @@ export default function GuardianGuidePage() {
           <div className="space-y-3 text-red-700">
             <div className="flex items-center">
               <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium mr-3">1</span>
-              <span>Take it seriously - don't dismiss or minimize their words</span>
+              <span>{"Take it seriously - don't dismiss or minimize their words"}</span>
             </div>
             <div className="flex items-center">
               <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium mr-3">2</span>
@@ -233,11 +233,11 @@ export default function GuardianGuidePage() {
             </div>
             <div className="flex items-center">
               <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium mr-3">3</span>
-              <span>Consider contacting emergency services if you believe they're in immediate danger</span>
+              <span>{"Consider contacting emergency services if you believe they're in immediate danger"}</span>
             </div>
             <div className="flex items-center">
               <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium mr-3">4</span>
-              <span>Don't try to handle crisis situations alone</span>
+              <span>{"Don't try to handle crisis situations alone"}</span>
             </div>
           </div>
 
@@ -335,7 +335,7 @@ export default function GuardianGuidePage() {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-red-700">Don't:</h3>
+            <h3 className="text-lg font-semibold text-red-700">{"Don't:"}</h3>
             <ul className="space-y-3">
               {[
                 "Make decisions based on your own relationship experiences alone",
@@ -371,9 +371,9 @@ export default function GuardianGuidePage() {
             <div className="bg-white p-4 rounded-lg">
               <h3 className="font-semibold text-blue-900 mb-2">If You Need Help:</h3>
               <ul className="text-blue-800 text-sm space-y-1">
-                <li>• Trust your instincts - they're usually right</li>
+                <li>• {"Trust your instincts - they're usually right"}</li>
                 <li>• Seek input from other trusted people when unsure</li>
-                <li>• Remember that "wait longer" is always an option</li>
+                <li>• {"Remember that &quot;wait longer&quot; is always an option"}</li>
                 <li>• Consider encouraging professional counseling</li>
               </ul>
             </div>
@@ -382,8 +382,8 @@ export default function GuardianGuidePage() {
               <h3 className="font-semibold text-blue-900 mb-2">Self-Care Reminders:</h3>
               <ul className="text-blue-800 text-sm space-y-1">
                 <li>• Set boundaries around your availability</li>
-                <li>• Don't carry the weight of their decisions</li>
-                <li>• Celebrate the positive impact you're making</li>
+                <li>• {"Don't carry the weight of their decisions"}</li>
+                <li>• {"Celebrate the positive impact you're making"}</li>
                 <li>• Step back if the role becomes overwhelming</li>
               </ul>
             </div>
@@ -399,7 +399,7 @@ export default function GuardianGuidePage() {
           </h2>
           <p className="text-gray-700 text-lg mb-6">
             Your willingness to help others maintain healthy boundaries makes a real difference in their lives. 
-            You're part of building a more supportive and accountable digital community.
+            {"You're part of building a more supportive and accountable digital community."}
           </p>
           
           <div className="space-y-2 text-gray-600">

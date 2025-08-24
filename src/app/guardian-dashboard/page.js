@@ -409,16 +409,16 @@ export default function GuardianDashboard() {
                       <span className="font-medium">Why they blocked originally:</span>
                     </p>
                     <p className="text-sm text-gray-800 mb-3">
-                      "{request.blocked_reason}"
+                      &quot;{request.blocked_reason}&quot;
                     </p>
                     
                     <p className="text-sm text-gray-700 mb-2">
                       <span className="font-medium">Current thoughts:</span>
                     </p>
                     <p className="text-sm text-gray-800">
-                      "{request.journal_entry.length > 150 
+                      &quot;{request.journal_entry.length > 150 
                         ? request.journal_entry.substring(0, 150) + '...'
-                        : request.journal_entry}"
+                        : request.journal_entry}&quot;
                     </p>
                   </div>
 
@@ -448,7 +448,7 @@ export default function GuardianDashboard() {
                   {request.guardian_response && (
                     <div className="mt-4 bg-blue-50 rounded-lg p-4">
                       <p className="text-sm font-medium text-blue-800 mb-2">Your Response:</p>
-                      <p className="text-sm text-blue-700">"{request.guardian_response}"</p>
+                      <p className="text-sm text-blue-700">&quot;{request.guardian_response}&quot;</p>
                     </div>
                   )}
                 </div>
@@ -551,14 +551,14 @@ export default function GuardianDashboard() {
                     <div>
                       <h3 className="font-semibold text-gray-900 mb-2">Why was this contact originally blocked?</h3>
                       <p className="text-gray-700 bg-red-50 p-4 rounded-lg">
-                        "{request.blocked_reason}"
+                        &quot;{request.blocked_reason}&quot;
                       </p>
                     </div>
 
                     <div>
                       <h3 className="font-semibold text-gray-900 mb-2">Current thoughts and feelings:</h3>
                       <p className="text-gray-700 bg-blue-50 p-4 rounded-lg">
-                        "{request.journal_entry}"
+                        &quot;{request.journal_entry}&quot;
                       </p>
                     </div>
 
@@ -566,7 +566,7 @@ export default function GuardianDashboard() {
                       <div>
                         <h3 className="font-semibold text-gray-900 mb-2">Additional context:</h3>
                         <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
-                          "{request.additional_context}"
+                          &quot;{request.additional_context}&quot;
                         </p>
                       </div>
                     )}
@@ -631,7 +631,7 @@ export default function GuardianDashboard() {
                   {request.guardian_response && (
                     <div className="mt-8 p-4 bg-blue-50 rounded-lg">
                       <h3 className="font-semibold text-blue-900 mb-2">Your Previous Response:</h3>
-                      <p className="text-blue-800">"{request.guardian_response}"</p>
+                      <p className="text-blue-800">&quot;{request.guardian_response}&quot;</p>
                       <p className="text-blue-600 text-sm mt-2">
                         Responded on {new Date(request.response_date).toLocaleDateString()}
                       </p>
