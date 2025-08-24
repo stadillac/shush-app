@@ -410,16 +410,16 @@ function GuardianDashboardContent() {
                       <span className="font-medium">Why they blocked originally:</span>
                     </p>
                     <p className="text-sm text-gray-800 mb-3">
-                      "{request.blocked_reason}"
+                      &quot;{request.blocked_reason}&quot;
                     </p>
                     
                     <p className="text-sm text-gray-700 mb-2">
                       <span className="font-medium">Current thoughts:</span>
                     </p>
                     <p className="text-sm text-gray-800">
-                      "{request.journal_entry.length > 150 
+                      "&quot;{request.journal_entry.length > 150 
                         ? request.journal_entry.substring(0, 150) + '...'
-                        : request.journal_entry}"
+                        : request.journal_entry}&quot;
                     </p>
                   </div>
 
@@ -449,7 +449,7 @@ function GuardianDashboardContent() {
                   {request.guardian_response && (
                     <div className="mt-4 bg-blue-50 rounded-lg p-4">
                       <p className="text-sm font-medium text-blue-800 mb-2">Your Response:</p>
-                      <p className="text-sm text-blue-700">"{request.guardian_response}"</p>
+                      <p className="text-sm text-blue-700">&quot;{request.guardian_response}&quot;</p>
                     </div>
                   )}
                 </div>
