@@ -552,14 +552,14 @@ function GuardianDashboardContent() {
                     <div>
                       <h3 className="font-semibold text-gray-900 mb-2">Why was this contact originally blocked?</h3>
                       <p className="text-gray-700 bg-red-50 p-4 rounded-lg">
-                        \"{request.blocked_reason}\"
+                        &quot;{request.blocked_reason}&quot;
                       </p>
                     </div>
 
                     <div>
                       <h3 className="font-semibold text-gray-900 mb-2">Current thoughts and feelings:</h3>
                       <p className="text-gray-700 bg-blue-50 p-4 rounded-lg">
-                        \"{request.journal_entry}\"
+                        &quot;{request.journal_entry}&quot;
                       </p>
                     </div>
 
@@ -567,7 +567,7 @@ function GuardianDashboardContent() {
                       <div>
                         <h3 className="font-semibold text-gray-900 mb-2">Additional context:</h3>
                         <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
-                          \"{request.additional_context}\"
+                          &quot;{request.additional_context}&quot;
                         </p>
                       </div>
                     )}
@@ -632,7 +632,7 @@ function GuardianDashboardContent() {
                   {request.guardian_response && (
                     <div className="mt-8 p-4 bg-blue-50 rounded-lg">
                       <h3 className="font-semibold text-blue-900 mb-2">Your Previous Response:</h3>
-                      <p className="text-blue-800">\"{request.guardian_response}\"</p>
+                      <p className="text-blue-800">&quot;{request.guardian_response}&quot;</p>
                       <p className="text-blue-600 text-sm mt-2">
                         Responded on {new Date(request.response_date).toLocaleDateString()}
                       </p>
