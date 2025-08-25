@@ -394,7 +394,7 @@ function GuardianDashboardContent() {
             </h3>
             <p className="text-gray-500">
               {filter === 'pending' 
-                ? {"You're all caught up! No pending requests need your attention."}
+                ? "You're all caught up! No pending requests need your attention."
                 : `No ${filter} requests to display.`
               }
             </p>
