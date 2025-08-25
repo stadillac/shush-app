@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import { getCurrentGuardian, signOutGuardian } from '../../lib/supabase'
 
-// Mock functions - you'll need to implement these in your supabase.js
+// Mock functions - replace with your actual supabase functions
 const getGuardianRequests = async (guardianEmail) => {
   await new Promise(resolve => setTimeout(resolve, 1000))
   return [
@@ -394,7 +394,7 @@ function GuardianDashboardContent() {
             </h3>
             <p className="text-gray-500">
               {filter === 'pending' 
-                ? "You\'re all caught up! No pending requests need your attention."
+                ? &quot;You're all caught up! No pending requests need your attention.&quot;
                 : `No ${filter} requests to display.`
               }
             </p>
@@ -449,16 +449,16 @@ function GuardianDashboardContent() {
                       <span className="font-medium">Why they blocked originally:</span>
                     </p>
                     <p className="text-sm text-gray-800 mb-3">
-                      "{request.blocked_reason}"
+                      &quot;{request.blocked_reason}&quot;
                     </p>
                     
                     <p className="text-sm text-gray-700 mb-2">
                       <span className="font-medium">Current thoughts:</span>
                     </p>
                     <p className="text-sm text-gray-800">
-                      "{request.journal_entry.length > 150 
+                      &quot;{request.journal_entry.length > 150 
                         ? request.journal_entry.substring(0, 150) + '...'
-                        : request.journal_entry}"
+                        : request.journal_entry}&quot;
                     </p>
                   </div>
 
@@ -488,7 +488,7 @@ function GuardianDashboardContent() {
                   {request.guardian_response && (
                     <div className="mt-4 bg-blue-50 rounded-lg p-4">
                       <p className="text-sm font-medium text-blue-800 mb-2">Your Response:</p>
-                      <p className="text-sm text-blue-700">"{request.guardian_response}"</p>
+                      <p className="text-sm text-blue-700">&quot;{request.guardian_response}&quot;</p>
                     </div>
                   )}
                 </div>
@@ -644,11 +644,7 @@ function GuardianDashboardContent() {
                           disabled={actionLoading === request.id}
                           className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
                         >
-                          {actionLoading === request.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : (
-                            <ThumbsDown className="h-4 w-4 mr-2" />
-                          )}
+                          {actionLoading === request.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                           Deny Request
                         </button>
                         <button
@@ -656,11 +652,7 @@ function GuardianDashboardContent() {
                           disabled={actionLoading === request.id}
                           className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
                         >
-                          {actionLoading === request.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : (
-                            <ThumbsUp className="h-4 w-4 mr-2" />
-                          )}
+                          {actionLoading === request.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                           Approve Request
                         </button>
                       </div>
@@ -700,7 +692,6 @@ function GuardianDashboardLoading() {
 export default function GuardianDashboard() {
   return (
     <Suspense fallback={<GuardianDashboardLoading />}>
-      <GuardianDashboardContent />
     </Suspense>
   )
 }
