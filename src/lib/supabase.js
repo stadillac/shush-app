@@ -20,6 +20,68 @@ if (!supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // ============================================
+// VALIDATION HELPERS
+// ============================================
+
+// Validate email format
+export function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+// Validate guardian data before submission
+export function validateGuardianData(guardianData) {
+  const errors = []
+  
+  if (!guardianData.name || guardianData.name.trim().length < 2) {
+    errors.push('Guardian name must be at least 2 characters')
+  }
+  
+  if (!guardianData.email || !isValidEmail(guardianData.email)) {
+    errors.push('Please enter a valid email address')
+  }
+  
+  if (!guardianData.relationship) {
+    errors.push('Please select a relationship type')
+  }
+  
+  if (guardianData.personalMessage && guardianData.personalMessage.length < 20) {
+    errors.push('Personal message must be at least 20 characters')
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
+}
+
+// ============================================
+// ANALYTICS & LOGGING FUNCTIONS
+// ============================================
+
+// Log user actions for analytics
+export async function logUserAction(userId, actionType, metadata = {}) {
+  try {
+    const { error } = await supabase
+      .from('user_actions')
+      .insert({
+        user_id: userId,
+        action_type: actionType,
+        metadata: metadata,
+        created_at: new Date().toISOString()
+      })
+    
+    if (error) {
+      console.error('Error logging user action:', error)
+      // Don't throw error for logging failures
+    }
+  } catch (err) {
+    console.error('Unexpected error in logUserAction:', err)
+    // Don't throw error for logging failures
+  }
+}
+
+// ============================================
 // BLOCKED CONTACTS FUNCTIONS
 // ============================================
 
@@ -44,7 +106,7 @@ export async function getBlockedContacts(userId) {
   }
 }
 
-// Block a new contact (Enhanced version)
+// Block a new contact
 export async function blockContact(userId, contactData) {
   try {
     // Validate required fields
@@ -60,7 +122,7 @@ export async function blockContact(userId, contactData) {
       contact_email: contactData.email?.trim() || null,
       relationship_type: contactData.relationship || 'Other',
       reason: contactData.reason.trim(),
-      platforms: contactData.platforms, // Array of platform IDs
+      platforms: contactData.platforms,
       severity: contactData.severity || 'medium',
       blocked_at: new Date().toISOString(),
       status: 'active'
@@ -168,7 +230,357 @@ export async function deleteBlockedContact(userId, contactId) {
 }
 
 // ============================================
-// GUARDIAN FUNCTIONS
+// GUARDIAN ACCOUNT MANAGEMENT
+// ============================================
+
+// Create a new Guardian account
+export async function createGuardianAccount(guardianData) {
+  try {
+    // Validate required fields
+    if (!guardianData.email || !guardianData.password || !guardianData.fullName) {
+      throw new Error('Email, password, and full name are required')
+    }
+
+    // Validate email format
+    if (!isValidEmail(guardianData.email)) {
+      throw new Error('Please enter a valid email address')
+    }
+
+    // Check if guardian account already exists with this email
+    const { data: existingGuardian } = await supabase
+      .from('guardian_accounts')
+      .select('id')
+      .eq('email', guardianData.email.toLowerCase())
+      .single()
+
+    if (existingGuardian) {
+      throw new Error('A Guardian account with this email already exists')
+    }
+
+    // Create auth user for the guardian
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: guardianData.email.trim().toLowerCase(),
+      password: guardianData.password,
+      options: {
+        data: {
+          user_type: 'guardian',
+          full_name: guardianData.fullName.trim()
+        }
+      }
+    })
+
+    if (authError) {
+      console.error('Guardian auth creation error:', authError)
+      throw new Error(authError.message || 'Failed to create Guardian account')
+    }
+
+    if (!authData.user) {
+      throw new Error('Failed to create Guardian authentication')
+    }
+
+    // Create guardian account record
+    const { data: guardianAccount, error: dbError } = await supabase
+      .from('guardian_accounts')
+      .insert({
+        id: authData.user.id,
+        email: guardianData.email.trim().toLowerCase(),
+        full_name: guardianData.fullName.trim(),
+        status: 'active',
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (dbError) {
+      console.error('Guardian account creation error:', dbError)
+      // Try to clean up auth user if database insert fails
+      await supabase.auth.admin.deleteUser(authData.user.id)
+      throw new Error('Failed to create Guardian account record')
+    }
+
+    // Log the action for analytics
+    await logUserAction(authData.user.id, 'guardian_account_created', {
+      email: guardianData.email,
+      signup_date: new Date().toISOString()
+    })
+
+    return {
+      success: true,
+      guardian: {
+        id: guardianAccount.id,
+        email: guardianAccount.email,
+        name: guardianAccount.full_name,
+        status: guardianAccount.status
+      },
+      authUser: authData.user
+    }
+  } catch (err) {
+    console.error('Unexpected error in createGuardianAccount:', err)
+    throw err
+  }
+}
+
+// Sign in Guardian account
+export async function signInGuardian(email, password) {
+  try {
+    if (!email || !password) {
+      throw new Error('Email and password are required')
+    }
+
+    // Sign in with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password: password
+    })
+
+    if (authError) {
+      console.error('Guardian auth sign in error:', authError)
+      throw new Error('Invalid email or password')
+    }
+
+    if (!authData.user) {
+      throw new Error('Sign in failed')
+    }
+
+    // Verify this is a Guardian account (not a regular user)
+    const { data: guardianAccount, error: dbError } = await supabase
+      .from('guardian_accounts')
+      .select('*')
+      .eq('id', authData.user.id)
+      .eq('status', 'active')
+      .single()
+
+    if (dbError || !guardianAccount) {
+      console.error('Guardian account lookup error:', dbError)
+      // Sign them out since they're not a valid guardian
+      await supabase.auth.signOut()
+      throw new Error('Guardian account not found or inactive')
+    }
+
+    // Update last sign in
+    await supabase
+      .from('guardian_accounts')
+      .update({ last_sign_in: new Date().toISOString() })
+      .eq('id', authData.user.id)
+
+    // Log the action
+    await logUserAction(authData.user.id, 'guardian_sign_in', {
+      email: email,
+      sign_in_date: new Date().toISOString()
+    })
+
+    return {
+      success: true,
+      guardian: {
+        id: guardianAccount.id,
+        email: guardianAccount.email,
+        name: guardianAccount.full_name,
+        status: guardianAccount.status,
+        created_at: guardianAccount.created_at
+      },
+      session: authData.session
+    }
+  } catch (err) {
+    console.error('Unexpected error in signInGuardian:', err)
+    throw err
+  }
+}
+
+// Get current Guardian account from session
+export async function getCurrentGuardian() {
+  try {
+    // Get current auth user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return null
+    }
+
+    // Get guardian account data
+    const { data: guardianAccount, error: dbError } = await supabase
+      .from('guardian_accounts')
+      .select('*')
+      .eq('id', user.id)
+      .eq('status', 'active')
+      .single()
+
+    if (dbError || !guardianAccount) {
+      return null
+    }
+
+    return {
+      id: guardianAccount.id,
+      email: guardianAccount.email,
+      name: guardianAccount.full_name,
+      status: guardianAccount.status,
+      created_at: guardianAccount.created_at,
+      last_sign_in: guardianAccount.last_sign_in
+    }
+  } catch (err) {
+    console.error('Error getting current guardian:', err)
+    return null
+  }
+}
+
+// Sign out Guardian
+export async function signOutGuardian() {
+  try {
+    const { error } = await supabase.auth.signOut()
+    
+    if (error) {
+      console.error('Guardian sign out error:', error)
+      return false
+    }
+
+    return true
+  } catch (err) {
+    console.error('Unexpected error in signOutGuardian:', err)
+    return false
+  }
+}
+
+// Update Guardian account information
+export async function updateGuardianAccount(guardianId, updates) {
+  try {
+    // Only allow certain fields to be updated
+    const allowedUpdates = {}
+    if (updates.full_name) allowedUpdates.full_name = updates.full_name.trim()
+    if (updates.status && ['active', 'inactive'].includes(updates.status)) {
+      allowedUpdates.status = updates.status
+    }
+
+    if (Object.keys(allowedUpdates).length === 0) {
+      throw new Error('No valid fields to update')
+    }
+
+    const { data, error } = await supabase
+      .from('guardian_accounts')
+      .update({
+        ...allowedUpdates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', guardianId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Guardian account update error:', error)
+      throw new Error('Failed to update Guardian account')
+    }
+
+    await logUserAction(guardianId, 'guardian_account_updated', {
+      updated_fields: Object.keys(allowedUpdates)
+    })
+
+    return {
+      id: data.id,
+      email: data.email,
+      name: data.full_name,
+      status: data.status,
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    }
+  } catch (err) {
+    console.error('Unexpected error in updateGuardianAccount:', err)
+    throw err
+  }
+}
+
+// Get Guardian by email (for user guardian selection)
+export async function findGuardianByEmail(email) {
+  try {
+    const { data: guardianAccount, error } = await supabase
+      .from('guardian_accounts')
+      .select('id, email, full_name, status, created_at')
+      .eq('email', email.toLowerCase())
+      .eq('status', 'active')
+      .single()
+
+    if (error || !guardianAccount) {
+      return null
+    }
+
+    return {
+      id: guardianAccount.id,
+      email: guardianAccount.email,
+      name: guardianAccount.full_name,
+      status: guardianAccount.status,
+      created_at: guardianAccount.created_at
+    }
+  } catch (err) {
+    console.error('Error finding guardian by email:', err)
+    return null
+  }
+}
+
+// Get Guardian statistics and activity
+export async function getGuardianAccountStats(guardianId) {
+  try {
+    // Get guardian relationships (how many people they help)
+    const { data: relationships } = await supabase
+      .from('guardians')
+      .select('user_id')
+      .eq('guardian_email', (await supabase
+        .from('guardian_accounts')
+        .select('email')
+        .eq('id', guardianId)
+        .single()
+      ).data?.email)
+      .eq('status', 'active')
+
+    // Get unblock requests handled
+    const { data: requests } = await supabase
+      .from('unblock_requests')
+      .select('status, created_at, guardian_responded_at')
+      .eq('guardian_email', (await supabase
+        .from('guardian_accounts')
+        .select('email')
+        .eq('id', guardianId)
+        .single()
+      ).data?.email)
+
+    const stats = {
+      people_helped: relationships?.length || 0,
+      total_requests: requests?.length || 0,
+      pending_requests: requests?.filter(r => r.status === 'pending').length || 0,
+      approved_requests: requests?.filter(r => r.status === 'approved').length || 0,
+      denied_requests: requests?.filter(r => r.status === 'denied').length || 0
+    }
+
+    // Calculate average response time
+    const completedRequests = requests?.filter(r => 
+      r.guardian_responded_at && r.created_at
+    ) || []
+
+    if (completedRequests.length > 0) {
+      const totalHours = completedRequests.reduce((sum, request) => {
+        const created = new Date(request.created_at)
+        const responded = new Date(request.guardian_responded_at)
+        return sum + ((responded - created) / (1000 * 60 * 60))
+      }, 0)
+
+      const avgHours = totalHours / completedRequests.length
+      stats.average_response_hours = Math.round(avgHours * 10) / 10
+    } else {
+      stats.average_response_hours = 0
+    }
+
+    return stats
+  } catch (err) {
+    console.error('Error getting guardian account stats:', err)
+    return {
+      people_helped: 0,
+      total_requests: 0,
+      pending_requests: 0,
+      approved_requests: 0,
+      denied_requests: 0,
+      average_response_hours: 0
+    }
+  }
+}
+
+// ============================================
+// USER GUARDIAN FUNCTIONS
 // ============================================
 
 // Get user's guardian
@@ -193,72 +605,204 @@ export async function getUserGuardian(userId) {
   }
 }
 
-// // Add a guardian
-// export async function addGuardian(userId, guardianData) {
-//   try {
-//     // Validate required fields
-//     if (!guardianData.email || !guardianData.name) {
-//       throw new Error('Guardian email and name are required')
-//     }
+// Add a guardian
+export async function addGuardian(userId, guardianData) {
+  try {
+    // Validate required fields
+    if (!guardianData.email || !guardianData.name) {
+      throw new Error('Guardian email and name are required')
+    }
 
-//     // First, deactivate any existing guardian
-//     await supabase
-//       .from('guardians')
-//       .update({ status: 'inactive' })
-//       .eq('user_id', userId)
+    // Check if guardian email is same as user's email
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user && guardianData.email.toLowerCase() === user.email.toLowerCase()) {
+      throw new Error('You cannot set yourself as your own Guardian')
+    }
 
-//     // Add new guardian
-//     const { data, error } = await supabase
-//       .from('guardians')
-//       .insert({
-//         user_id: userId,
-//         guardian_email: guardianData.email.trim().toLowerCase(),
-//         guardian_name: guardianData.name.trim(),
-//         relationship_type: guardianData.relationship || 'friend',
-//         status: 'active'
-//       })
-//       .select()
-    
-//     if (error) {
-//       console.error('Error adding guardian:', error)
-//       throw error
-//     }
-    
-//     await logUserAction(userId, 'guardian_added', {
-//       guardian_email: guardianData.email
-//     })
-    
-//     return data[0]
-//   } catch (err) {
-//     console.error('Unexpected error in addGuardian:', err)
-//     throw err
-//   }
-// }
+    // First, deactivate any existing guardian
+    await supabase
+      .from('guardians')
+      .update({ status: 'inactive' })
+      .eq('user_id', userId)
 
-// Update guardian
-// export async function updateGuardian(userId, guardianId, updates) {
-//   try {
-//     const { data, error } = await supabase
-//       .from('guardians')
-//       .update({
-//         ...updates,
-//         updated_at: new Date().toISOString()
-//       })
-//       .eq('user_id', userId)
-//       .eq('id', guardianId)
-//       .select()
+    // Add new guardian
+    const { data, error } = await supabase
+      .from('guardians')
+      .insert({
+        user_id: userId,
+        guardian_email: guardianData.email.trim().toLowerCase(),
+        guardian_name: guardianData.name.trim(),
+        relationship_type: guardianData.relationship || 'friend',
+        personal_message: guardianData.personalMessage || '',
+        status: 'active'
+      })
+      .select()
     
-//     if (error) {
-//       console.error('Error updating guardian:', error)
-//       throw error
-//     }
+    if (error) {
+      console.error('Error adding guardian:', error)
+      throw new Error(error.message || 'Failed to add Guardian')
+    }
     
-//     return data[0]
-//   } catch (err) {
-//     console.error('Unexpected error in updateGuardian:', err)
-//     throw err
-//   }
-// }
+    // Log the action
+    await logUserAction(userId, 'guardian_added', {
+      guardian_email: guardianData.email,
+      relationship_type: guardianData.relationship
+    })
+
+    // In a real app, you would send an email notification here
+    // await sendGuardianInvitationEmail(guardianData, user)
+    
+    return data[0]
+  } catch (err) {
+    console.error('Unexpected error in addGuardian:', err)
+    throw err
+  }
+}
+
+// Enhanced add guardian function that validates Guardian account exists
+export async function addGuardianWithAccountValidation(userId, guardianData) {
+  try {
+    // First check if a Guardian account exists with this email
+    const guardianAccount = await findGuardianByEmail(guardianData.email)
+    
+    if (!guardianAccount) {
+      throw new Error(`No Guardian account found with email ${guardianData.email}. They need to create a Guardian account first.`)
+    }
+
+    // Use the existing addGuardian function
+    const result = await addGuardian(userId, guardianData)
+    
+    // Log that a verified Guardian account was linked
+    await logUserAction(userId, 'verified_guardian_added', {
+      guardian_account_id: guardianAccount.id,
+      guardian_email: guardianData.email
+    })
+
+    return result
+  } catch (err) {
+    console.error('Error in addGuardianWithAccountValidation:', err)
+    throw err
+  }
+}
+
+// Update guardian information
+export async function updateGuardian(userId, guardianId, updates) {
+  try {
+    // Validate that we're not changing email to user's own email
+    if (updates.guardian_email) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && updates.guardian_email.toLowerCase() === user.email.toLowerCase()) {
+        throw new Error('You cannot set yourself as your own Guardian')
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('guardians')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userId)
+      .eq('id', guardianId)
+      .select()
+    
+    if (error) {
+      console.error('Error updating guardian:', error)
+      throw new Error(error.message || 'Failed to update Guardian')
+    }
+
+    if (data.length === 0) {
+      throw new Error('Guardian not found or you do not have permission to update it')
+    }
+    
+    await logUserAction(userId, 'guardian_updated', {
+      guardian_id: guardianId,
+      updates: Object.keys(updates)
+    })
+    
+    return data[0]
+  } catch (err) {
+    console.error('Unexpected error in updateGuardian:', err)
+    throw err
+  }
+}
+
+// Remove guardian (set status to inactive)
+export async function removeGuardian(userId, guardianId) {
+  try {
+    const { data, error } = await supabase
+      .from('guardians')
+      .update({ 
+        status: 'inactive',
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userId)
+      .eq('id', guardianId)
+      .select()
+    
+    if (error) {
+      console.error('Error removing guardian:', error)
+      throw new Error(error.message || 'Failed to remove Guardian')
+    }
+
+    if (data.length === 0) {
+      throw new Error('Guardian not found or you do not have permission to remove it')
+    }
+    
+    await logUserAction(userId, 'guardian_removed', {
+      guardian_id: guardianId
+    })
+    
+    return data[0]
+  } catch (err) {
+    console.error('Unexpected error in removeGuardian:', err)
+    throw err
+  }
+}
+
+// Check if user has active guardian
+export async function hasActiveGuardian(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('guardians')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single()
+    
+    return !error && !!data
+  } catch (err) {
+    return false
+  }
+}
+
+// Get guardian invitation details (for email templates)
+export async function getGuardianInvitationData(userId, guardianId) {
+  try {
+    const { data, error } = await supabase
+      .from('guardians')
+      .select(`
+        *,
+        profiles (
+          full_name,
+          email
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('id', guardianId)
+      .single()
+    
+    if (error) {
+      console.error('Error fetching guardian invitation data:', error)
+      return null
+    }
+    
+    return data
+  } catch (err) {
+    console.error('Unexpected error in getGuardianInvitationData:', err)
+    return null
+  }
+}
 
 // ============================================
 // UNBLOCK REQUEST FUNCTIONS
@@ -381,386 +925,10 @@ export async function getUnblockRequest(userId, requestId) {
 }
 
 // ============================================
-// ANALYTICS & LOGGING FUNCTIONS
-// ============================================
-
-// Log user actions for analytics
-export async function logUserAction(userId, actionType, metadata = {}) {
-  try {
-    const { error } = await supabase
-      .from('user_actions')
-      .insert({
-        user_id: userId,
-        action_type: actionType,
-        metadata: metadata,
-        created_at: new Date().toISOString()
-      })
-    
-    if (error) {
-      console.error('Error logging user action:', error)
-      // Don't throw error for logging failures
-    }
-  } catch (err) {
-    console.error('Unexpected error in logUserAction:', err)
-    // Don't throw error for logging failures
-  }
-}
-
-// Get user stats for dashboard
-export async function getUserStats(userId) {
-  try {
-    const [blockedContacts, unblockRequests, guardian] = await Promise.all([
-      getBlockedContacts(userId),
-      getUnblockRequests(userId),
-      getUserGuardian(userId)
-    ])
-
-    // Calculate impulse-free streak
-    let streakDays = 0
-    if (blockedContacts.length > 0) {
-      const oldestBlock = blockedContacts.reduce((oldest, contact) => {
-        const contactDate = new Date(contact.blocked_at)
-        const oldestDate = new Date(oldest.blocked_at)
-        return contactDate < oldestDate ? contact : oldest
-      })
-      
-      const daysSince = Math.floor(
-        (new Date() - new Date(oldestBlock.blocked_at)) / (1000 * 60 * 60 * 24)
-      )
-      streakDays = daysSince
-    }
-
-    return {
-      totalBlockedContacts: blockedContacts.length,
-      activeBlockedContacts: blockedContacts.filter(c => c.status === 'active').length,
-      totalUnblockRequests: unblockRequests.length,
-      pendingUnblockRequests: unblockRequests.filter(r => r.status === 'pending').length,
-      hasActiveGuardian: !!guardian,
-      impulseFreeStreak: streakDays,
-      platformsUsed: [...new Set(blockedContacts.flatMap(c => c.platforms))],
-      riskLevels: {
-        low: blockedContacts.filter(c => c.severity === 'low').length,
-        medium: blockedContacts.filter(c => c.severity === 'medium').length,
-        high: blockedContacts.filter(c => c.severity === 'high').length
-      }
-    }
-  } catch (err) {
-    console.error('Unexpected error in getUserStats:', err)
-    return {
-      totalBlockedContacts: 0,
-      activeBlockedContacts: 0,
-      totalUnblockRequests: 0,
-      pendingUnblockRequests: 0,
-      hasActiveGuardian: false,
-      impulseFreeStreak: 0,
-      platformsUsed: [],
-      riskLevels: { low: 0, medium: 0, high: 0 }
-    }
-  }
-}
-
-
-// ============================================
-// ENHANCED GUARDIAN FUNCTIONS
-// ============================================
-
-// Add a guardian (enhanced version)
-export async function addGuardian(userId, guardianData) {
-  try {
-    // Validate required fields
-    if (!guardianData.email || !guardianData.name) {
-      throw new Error('Guardian email and name are required')
-    }
-
-    // Check if guardian email is same as user's email
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user && guardianData.email.toLowerCase() === user.email.toLowerCase()) {
-      throw new Error('You cannot set yourself as your own Guardian')
-    }
-
-    // First, deactivate any existing guardian
-    await supabase
-      .from('guardians')
-      .update({ status: 'inactive' })
-      .eq('user_id', userId)
-
-    // Add new guardian
-    const { data, error } = await supabase
-      .from('guardians')
-      .insert({
-        user_id: userId,
-        guardian_email: guardianData.email.trim().toLowerCase(),
-        guardian_name: guardianData.name.trim(),
-        relationship_type: guardianData.relationship || 'friend',
-        personal_message: guardianData.personalMessage || '',
-        status: 'active'
-      })
-      .select()
-    
-    if (error) {
-      console.error('Error adding guardian:', error)
-      throw new Error(error.message || 'Failed to add Guardian')
-    }
-    
-    // Log the action
-    await logUserAction(userId, 'guardian_added', {
-      guardian_email: guardianData.email,
-      relationship_type: guardianData.relationship
-    })
-
-    // In a real app, you would send an email notification here
-    // await sendGuardianInvitationEmail(guardianData, user)
-    
-    return data[0]
-  } catch (err) {
-    console.error('Unexpected error in addGuardian:', err)
-    throw err
-  }
-}
-
-// Update guardian information
-export async function updateGuardian(userId, guardianId, updates) {
-  try {
-    // Validate that we're not changing email to user's own email
-    if (updates.guardian_email) {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user && updates.guardian_email.toLowerCase() === user.email.toLowerCase()) {
-        throw new Error('You cannot set yourself as your own Guardian')
-      }
-    }
-
-    const { data, error } = await supabase
-      .from('guardians')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', userId)
-      .eq('id', guardianId)
-      .select()
-    
-    if (error) {
-      console.error('Error updating guardian:', error)
-      throw new Error(error.message || 'Failed to update Guardian')
-    }
-
-    if (data.length === 0) {
-      throw new Error('Guardian not found or you do not have permission to update it')
-    }
-    
-    await logUserAction(userId, 'guardian_updated', {
-      guardian_id: guardianId,
-      updates: Object.keys(updates)
-    })
-    
-    return data[0]
-  } catch (err) {
-    console.error('Unexpected error in updateGuardian:', err)
-    throw err
-  }
-}
-
-// Remove guardian (set status to inactive)
-export async function removeGuardian(userId, guardianId) {
-  try {
-    const { data, error } = await supabase
-      .from('guardians')
-      .update({ 
-        status: 'inactive',
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', userId)
-      .eq('id', guardianId)
-      .select()
-    
-    if (error) {
-      console.error('Error removing guardian:', error)
-      throw new Error(error.message || 'Failed to remove Guardian')
-    }
-
-    if (data.length === 0) {
-      throw new Error('Guardian not found or you do not have permission to remove it')
-    }
-    
-    await logUserAction(userId, 'guardian_removed', {
-      guardian_id: guardianId
-    })
-    
-    return data[0]
-  } catch (err) {
-    console.error('Unexpected error in removeGuardian:', err)
-    throw err
-  }
-}
-
-// Get guardian invitation details (for email templates)
-export async function getGuardianInvitationData(userId, guardianId) {
-  try {
-    const { data, error } = await supabase
-      .from('guardians')
-      .select(`
-        *,
-        profiles (
-          full_name,
-          email
-        )
-      `)
-      .eq('user_id', userId)
-      .eq('id', guardianId)
-      .single()
-    
-    if (error) {
-      console.error('Error fetching guardian invitation data:', error)
-      return null
-    }
-    
-    return data
-  } catch (err) {
-    console.error('Unexpected error in getGuardianInvitationData:', err)
-    return null
-  }
-}
-
-// Check if user has active guardian
-export async function hasActiveGuardian(userId) {
-  try {
-    const { data, error } = await supabase
-      .from('guardians')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .single()
-    
-    return !error && !!data
-  } catch (err) {
-    return false
-  }
-}
-
-// Get guardian stats for dashboard
-export async function getGuardianStats(userId) {
-  try {
-    const guardian = await getUserGuardian(userId)
-    if (!guardian) {
-      return {
-        hasGuardian: false,
-        guardianSince: null,
-        totalRequests: 0,
-        approvedRequests: 0,
-        pendingRequests: 0
-      }
-    }
-
-    // Get unblock request stats
-    const { data: requests } = await supabase
-      .from('unblock_requests')
-      .select('status')
-      .eq('user_id', userId)
-
-    const stats = {
-      hasGuardian: true,
-      guardianSince: guardian.created_at,
-      totalRequests: requests?.length || 0,
-      approvedRequests: requests?.filter(r => r.status === 'approved').length || 0,
-      deniedRequests: requests?.filter(r => r.status === 'denied').length || 0,
-      pendingRequests: requests?.filter(r => r.status === 'pending').length || 0
-    }
-
-    return stats
-  } catch (err) {
-    console.error('Error getting guardian stats:', err)
-    return {
-      hasGuardian: false,
-      guardianSince: null,
-      totalRequests: 0,
-      approvedRequests: 0,
-      pendingRequests: 0
-    }
-  }
-}
-
-// ============================================
-// EMAIL NOTIFICATION FUNCTIONS (for future implementation)
-// ============================================
-
-// Placeholder function for sending guardian invitation email
-export async function sendGuardianInvitationEmail(guardianData, user) {
-  // This would integrate with your email service (SendGrid, AWS SES, etc.)
-  // For now, just log the action
-  console.log('Guardian invitation email would be sent to:', guardianData.email)
-  console.log('From user:', user.email)
-  console.log('Personal message:', guardianData.personalMessage)
-  
-  // In a real implementation:
-  // - Generate secure invitation link
-  // - Send HTML email with guardian instructions
-  // - Include personal message from user
-  // - Provide links to Guardian guidelines and support
-  
-  return true
-}
-
-// Placeholder function for sending unblock request notification
-export async function sendUnblockRequestEmail(guardianEmail, requestData) {
-  console.log('Unblock request email would be sent to:', guardianEmail)
-  console.log('Request details:', requestData)
-  
-  // In a real implementation:
-  // - Send email with request context
-  // - Include approve/deny links
-  // - Show user's journal entry and mood
-  // - Provide Guardian support resources
-  
-  return true
-}
-
-// ============================================
-// VALIDATION HELPERS
-// ============================================
-
-// Validate email format
-export function isValidEmail(email) {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
-
-// Validate guardian data before submission
-export function validateGuardianData(guardianData) {
-  const errors = []
-  
-  if (!guardianData.name || guardianData.name.trim().length < 2) {
-    errors.push('Guardian name must be at least 2 characters')
-  }
-  
-  if (!guardianData.email || !isValidEmail(guardianData.email)) {
-    errors.push('Please enter a valid email address')
-  }
-  
-  if (!guardianData.relationship) {
-    errors.push('Please select a relationship type')
-  }
-  
-  if (guardianData.personalMessage && guardianData.personalMessage.length < 20) {
-    errors.push('Personal message must be at least 20 characters')
-  }
-  
-  return {
-    isValid: errors.length === 0,
-    errors
-  }
-}
-
-// Add these functions to your src/lib/supabase.js file
-
-// ============================================
 // GUARDIAN DASHBOARD FUNCTIONS
 // ============================================
 
-/**
- * Get all unblock requests for a specific guardian
- * @param {string} guardianEmail - The guardian's email address
- * @returns {Array} Array of unblock requests with user and contact details
- */
+// Get all unblock requests for a specific guardian
 export async function getGuardianRequests(guardianEmail) {
   try {
     const { data, error } = await supabase
@@ -818,14 +986,30 @@ export async function getGuardianRequests(guardianEmail) {
   }
 }
 
-/**
- * Respond to an unblock request as a guardian
- * @param {string} requestId - The unblock request ID
- * @param {string} response - 'approved' or 'denied'
- * @param {string} message - Guardian's response message
- * @param {string} guardianEmail - The guardian's email for verification
- * @returns {Object} Updated request data
- */
+// Get all unblock requests for a guardian by account ID
+export async function getGuardianRequestsByAccountId(guardianId) {
+  try {
+    // First get the guardian's email
+    const { data: guardianAccount, error: guardianError } = await supabase
+      .from('guardian_accounts')
+      .select('email')
+      .eq('id', guardianId)
+      .single()
+
+    if (guardianError || !guardianAccount) {
+      console.error('Guardian account not found:', guardianError)
+      return []
+    }
+
+    // Use the existing function with the guardian's email
+    return await getGuardianRequests(guardianAccount.email)
+  } catch (err) {
+    console.error('Unexpected error in getGuardianRequestsByAccountId:', err)
+    return []
+  }
+}
+
+// Respond to an unblock request as a guardian
 export async function respondToUnblockRequest(requestId, response, message, guardianEmail) {
   try {
     // Validate response
@@ -889,9 +1073,6 @@ export async function respondToUnblockRequest(requestId, response, message, guar
       message_length: message.length
     })
 
-    // In a real app, send notification email to user here
-    // await sendUnblockResponseEmail(existingRequest.user_id, response, message)
-
     return data[0]
   } catch (err) {
     console.error('Unexpected error in respondToUnblockRequest:', err)
@@ -899,11 +1080,7 @@ export async function respondToUnblockRequest(requestId, response, message, guar
   }
 }
 
-/**
- * Get statistics for a guardian's dashboard
- * @param {string} guardianEmail - The guardian's email address
- * @returns {Object} Guardian statistics
- */
+// Get statistics for a guardian's dashboard
 export async function getGuardianDashboardStats(guardianEmail) {
   try {
     // Get all requests for this guardian
@@ -957,7 +1134,7 @@ export async function getGuardianDashboardStats(guardianEmail) {
       streak = daysSinceFirst
     }
 
-    const stats = {
+    return {
       totalUsers: uniqueUsers.size,
       totalRequests: requests?.length || 0,
       approvedRequests: requests?.filter(r => r.status === 'approved').length || 0,
@@ -966,19 +1143,13 @@ export async function getGuardianDashboardStats(guardianEmail) {
       averageResponseTime,
       streak
     }
-
-    return stats
   } catch (err) {
     console.error('Unexpected error in getGuardianDashboardStats:', err)
     return getEmptyGuardianStats()
   }
 }
 
-/**
- * Get guardian information and verify access
- * @param {string} guardianEmail - The guardian's email address
- * @returns {Object|null} Guardian info or null if not found
- */
+// Get guardian information and verify access
 export async function getGuardianInfo(guardianEmail) {
   try {
     const { data, error } = await supabase
@@ -1016,12 +1187,7 @@ export async function getGuardianInfo(guardianEmail) {
   }
 }
 
-/**
- * Get detailed request information for guardian review
- * @param {string} requestId - The unblock request ID
- * @param {string} guardianEmail - Guardian email for permission check
- * @returns {Object|null} Detailed request information
- */
+// Get detailed request information for guardian review
 export async function getGuardianRequestDetails(requestId, guardianEmail) {
   try {
     const { data, error } = await supabase
@@ -1067,11 +1233,7 @@ export async function getGuardianRequestDetails(requestId, guardianEmail) {
   }
 }
 
-/**
- * Update guardian notification preferences
- * @param {string} guardianEmail - Guardian's email
- * @param {Object} preferences - Notification preferences
- */
+// Update guardian notification preferences
 export async function updateGuardianPreferences(guardianEmail, preferences) {
   try {
     // This would update a guardian_preferences table if you have one
@@ -1081,12 +1243,6 @@ export async function updateGuardianPreferences(guardianEmail, preferences) {
       preferences
     })
 
-    // In a real implementation, you might store:
-    // - Email notification frequency
-    // - Response time reminders
-    // - Emergency contact preferences
-    // - Dashboard theme preferences
-
     return { success: true }
   } catch (err) {
     console.error('Error updating guardian preferences:', err)
@@ -1094,9 +1250,7 @@ export async function updateGuardianPreferences(guardianEmail, preferences) {
   }
 }
 
-/**
- * Helper function to return empty stats when there's an error
- */
+// Helper function to return empty stats when there's an error
 function getEmptyGuardianStats() {
   return {
     totalUsers: 0,
@@ -1110,49 +1264,10 @@ function getEmptyGuardianStats() {
 }
 
 // ============================================
-// GUARDIAN EMAIL NOTIFICATIONS
-// ============================================
-
-/**
- * Send email notification to user about guardian response
- * @param {string} userId - User ID
- * @param {string} response - 'approved' or 'denied'
- * @param {string} message - Guardian's message
- */
-export async function sendUnblockResponseEmail(userId, response, message) {
-  // Placeholder for email notification
-  // In a real app, integrate with SendGrid, AWS SES, or similar
-  console.log('Unblock response email would be sent:', {
-    userId,
-    response,
-    message: message.substring(0, 50) + '...'
-  })
-  
-  return true
-}
-
-/**
- * Send emergency notification to guardian
- * @param {string} guardianEmail - Guardian's email
- * @param {Object} emergencyData - Emergency request data
- */
-export async function sendEmergencyNotification(guardianEmail, emergencyData) {
-  // Placeholder for emergency notification
-  // Would send immediate notification for high-priority requests
-  console.log('Emergency notification would be sent to:', guardianEmail)
-  
-  return true
-}
-
-// ============================================
 // GUARDIAN ANALYTICS
 // ============================================
 
-/**
- * Get guardian performance analytics
- * @param {string} guardianEmail - Guardian's email
- * @param {number} days - Number of days to look back (default 30)
- */
+// Get guardian performance analytics
 export async function getGuardianAnalytics(guardianEmail, days = 30) {
   try {
     const startDate = new Date()
@@ -1217,4 +1332,143 @@ function calculateUrgencyDistribution(requests) {
     urgencies[urgency] = (urgencies[urgency] || 0) + 1
   })
   return urgencies
+}
+
+// ============================================
+// USER STATS & DASHBOARD FUNCTIONS
+// ============================================
+
+// Get user stats for dashboard
+export async function getUserStats(userId) {
+  try {
+    const [blockedContacts, unblockRequests, guardian] = await Promise.all([
+      getBlockedContacts(userId),
+      getUnblockRequests(userId),
+      getUserGuardian(userId)
+    ])
+
+    // Calculate impulse-free streak
+    let streakDays = 0
+    if (blockedContacts.length > 0) {
+      const oldestBlock = blockedContacts.reduce((oldest, contact) => {
+        const contactDate = new Date(contact.blocked_at)
+        const oldestDate = new Date(oldest.blocked_at)
+        return contactDate < oldestDate ? contact : oldest
+      })
+      
+      const daysSince = Math.floor(
+        (new Date() - new Date(oldestBlock.blocked_at)) / (1000 * 60 * 60 * 24)
+      )
+      streakDays = daysSince
+    }
+
+    return {
+      totalBlockedContacts: blockedContacts.length,
+      activeBlockedContacts: blockedContacts.filter(c => c.status === 'active').length,
+      totalUnblockRequests: unblockRequests.length,
+      pendingUnblockRequests: unblockRequests.filter(r => r.status === 'pending').length,
+      hasActiveGuardian: !!guardian,
+      impulseFreeStreak: streakDays,
+      platformsUsed: [...new Set(blockedContacts.flatMap(c => c.platforms))],
+      riskLevels: {
+        low: blockedContacts.filter(c => c.severity === 'low').length,
+        medium: blockedContacts.filter(c => c.severity === 'medium').length,
+        high: blockedContacts.filter(c => c.severity === 'high').length
+      }
+    }
+  } catch (err) {
+    console.error('Unexpected error in getUserStats:', err)
+    return {
+      totalBlockedContacts: 0,
+      activeBlockedContacts: 0,
+      totalUnblockRequests: 0,
+      pendingUnblockRequests: 0,
+      hasActiveGuardian: false,
+      impulseFreeStreak: 0,
+      platformsUsed: [],
+      riskLevels: { low: 0, medium: 0, high: 0 }
+    }
+  }
+}
+
+// Get guardian stats for user dashboard
+export async function getGuardianStats(userId) {
+  try {
+    const guardian = await getUserGuardian(userId)
+    if (!guardian) {
+      return {
+        hasGuardian: false,
+        guardianSince: null,
+        totalRequests: 0,
+        approvedRequests: 0,
+        pendingRequests: 0
+      }
+    }
+
+    // Get unblock request stats
+    const { data: requests } = await supabase
+      .from('unblock_requests')
+      .select('status')
+      .eq('user_id', userId)
+
+    const stats = {
+      hasGuardian: true,
+      guardianSince: guardian.created_at,
+      totalRequests: requests?.length || 0,
+      approvedRequests: requests?.filter(r => r.status === 'approved').length || 0,
+      deniedRequests: requests?.filter(r => r.status === 'denied').length || 0,
+      pendingRequests: requests?.filter(r => r.status === 'pending').length || 0
+    }
+
+    return stats
+  } catch (err) {
+    console.error('Error getting guardian stats:', err)
+    return {
+      hasGuardian: false,
+      guardianSince: null,
+      totalRequests: 0,
+      approvedRequests: 0,
+      pendingRequests: 0
+    }
+  }
+}
+
+// ============================================
+// EMAIL NOTIFICATION FUNCTIONS
+// ============================================
+
+// Send guardian invitation email (placeholder)
+export async function sendGuardianInvitationEmail(guardianData, user) {
+  // This would integrate with your email service (SendGrid, AWS SES, etc.)
+  console.log('Guardian invitation email would be sent to:', guardianData.email)
+  console.log('From user:', user.email)
+  console.log('Personal message:', guardianData.personalMessage)
+  
+  return true
+}
+
+// Send unblock request notification (placeholder)
+export async function sendUnblockRequestEmail(guardianEmail, requestData) {
+  console.log('Unblock request email would be sent to:', guardianEmail)
+  console.log('Request details:', requestData)
+  
+  return true
+}
+
+// Send email notification to user about guardian response (placeholder)
+export async function sendUnblockResponseEmail(userId, response, message) {
+  console.log('Unblock response email would be sent:', {
+    userId,
+    response,
+    message: message.substring(0, 50) + '...'
+  })
+  
+  return true
+}
+
+// Send emergency notification to guardian (placeholder)
+export async function sendEmergencyNotification(guardianEmail, emergencyData) {
+  console.log('Emergency notification would be sent to:', guardianEmail)
+  
+  return true
 }

@@ -24,6 +24,7 @@ import {
   Star,
   TrendingUp
 } from 'lucide-react'
+import { getCurrentGuardian, signOutGuardian } from '../../lib/supabase'
 
 // Mock functions - you'll need to implement these in your supabase.js
 const getGuardianRequests = async (guardianEmail) => {
@@ -132,19 +133,44 @@ function GuardianDashboardContent() {
   const [filter, setFilter] = useState('pending') // pending, all, approved, denied
   const [showRequestDetails, setShowRequestDetails] = useState(null)
   const [responseMessage, setResponseMessage] = useState('')
+  const [currentGuardian, setCurrentGuardian] = useState(null)
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Get guardian email from URL params or localStorage
-  const guardianEmail = searchParams.get('email') || 'guardian@example.com'
+  // Get guardian email from URL params (for demo/testing) or use current session
+  const demoEmail = searchParams.get('email')
 
   useEffect(() => {
     loadDashboardData()
-  }, [guardianEmail])
+  }, [demoEmail])
 
   const loadDashboardData = async () => {
     try {
       setLoading(true)
+      
+      let guardianData = null
+      let guardianEmail = null
+
+      // If demo email is provided, use it (for testing)
+      if (demoEmail) {
+        guardianEmail = demoEmail
+        guardianData = { email: demoEmail, name: 'Demo Guardian' }
+        setCurrentGuardian(guardianData)
+      } else {
+        // Get current authenticated guardian
+        guardianData = await getCurrentGuardian()
+        
+        if (!guardianData) {
+          // Not authenticated as a guardian, redirect to login
+          router.push('/guardian/login')
+          return
+        }
+        
+        guardianEmail = guardianData.email
+        setCurrentGuardian(guardianData)
+      }
+      
+      // Load requests and stats using the guardian email
       const [requestsData, statsData] = await Promise.all([
         getGuardianRequests(guardianEmail),
         getGuardianStats(guardianEmail)
@@ -243,9 +269,11 @@ function GuardianDashboardContent() {
             <p className="text-gray-600">
               Helping your loved ones make thoughtful decisions
             </p>
-            <p className="text-sm text-gray-500 mt-1">
-              Signed in as: {guardianEmail}
-            </p>
+            {currentGuardian && (
+              <p className="text-sm text-gray-500 mt-1">
+                Signed in as: {currentGuardian.name} ({currentGuardian.email})
+              </p>
+            )}
           </div>
         </div>
         
@@ -257,6 +285,17 @@ function GuardianDashboardContent() {
             <HelpCircle className="h-5 w-5 mr-2" />
             Guardian Guide
           </button>
+          {currentGuardian && (
+            <button
+              onClick={async () => {
+                await signOutGuardian()
+                router.push('/guardian/login')
+              }}
+              className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Sign Out
+            </button>
+          )}
         </div>
       </div>
 
@@ -410,16 +449,16 @@ function GuardianDashboardContent() {
                       <span className="font-medium">Why they blocked originally:</span>
                     </p>
                     <p className="text-sm text-gray-800 mb-3">
-                      &quot;{request.blocked_reason}&quot;
+                      "{request.blocked_reason}"
                     </p>
                     
                     <p className="text-sm text-gray-700 mb-2">
                       <span className="font-medium">Current thoughts:</span>
                     </p>
                     <p className="text-sm text-gray-800">
-                      &quot;{request.journal_entry.length > 150 
+                      "{request.journal_entry.length > 150 
                         ? request.journal_entry.substring(0, 150) + '...'
-                        : request.journal_entry}&quot;
+                        : request.journal_entry}"
                     </p>
                   </div>
 
@@ -449,7 +488,7 @@ function GuardianDashboardContent() {
                   {request.guardian_response && (
                     <div className="mt-4 bg-blue-50 rounded-lg p-4">
                       <p className="text-sm font-medium text-blue-800 mb-2">Your Response:</p>
-                      <p className="text-sm text-blue-700">&quot;{request.guardian_response}&quot;</p>
+                      <p className="text-sm text-blue-700">"{request.guardian_response}"</p>
                     </div>
                   )}
                 </div>

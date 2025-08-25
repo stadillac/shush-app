@@ -75,7 +75,7 @@ export default function GuardianGuidePage() {
               <h3 className="text-lg font-semibold">Stay Supportive</h3>
             </div>
             <p className="text-gray-700">
-              {"Remember you're helping someone build healthier relationships. Be compassionate while maintaining healthy boundaries."}
+              Remember you're helping someone build healthier relationships. Be compassionate while maintaining healthy boundaries.
             </p>
           </div>
         </div>
@@ -150,21 +150,21 @@ export default function GuardianGuidePage() {
           <div className="bg-green-50 border border-green-200 rounded-lg p-6">
             <h3 className="text-green-800 font-semibold mb-3">Approval Response Example:</h3>
             <div className="bg-white p-4 rounded border text-gray-700 italic">
-              {"'I can see you've taken time to reflect and have grown since the blocking. Your reasons for wanting to reconnect seem healthy and well-thought-out. I approve this unblock, but please remember the boundaries you've learned and don't hesitate to re-block if needed. I'm proud of your progress.'"}
+              &quot;{"I can see you've taken time to reflect and have grown since the blocking. Your reasons for wanting to reconnect seem healthy and well-thought-out. I approve this unblock, but please remember the boundaries you've learned and don't hesitate to re-block if needed. I'm proud of your progress."}&quot;
             </div>
           </div>
 
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <h3 className="text-red-800 font-semibold mb-3">Denial Response Example:</h3>
             <div className="bg-white p-4 rounded border text-gray-700 italic">
-              {"'I understand you're feeling lonely right now, but remember why you blocked them originally - the constant manipulation was affecting your mental health. You're in a vulnerable state and might not see clearly. Let's wait another month and focus on building other supportive relationships first. You've made such good progress.'"}
+              &quot;{"I understand you're feeling lonely right now, but remember why you blocked them originally - the constant manipulation was affecting your mental health. You're in a vulnerable state and might not see clearly. Let's wait another month and focus on building other supportive relationships first. You've made such good progress."}&quot;
             </div>
           </div>
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
             <h3 className="text-yellow-800 font-semibold mb-3">Request for More Information:</h3>
             <div className="bg-white p-4 rounded border text-gray-700 italic">
-              {"'I need to understand better before making this decision. Can you tell me more about what's changed since you blocked them? Have you talked to your therapist about this? What specific outcome are you hoping for from reconnecting? Let's have a call this weekend to discuss.'"}
+              &quot;{"I need to understand better before making this decision. Can you tell me more about what's changed since you blocked them? Have you talked to your therapist about this? What specific outcome are you hoping for from reconnecting? Let's have a call this weekend to discuss."}&quot;
             </div>
           </div>
         </div>
@@ -373,7 +373,7 @@ export default function GuardianGuidePage() {
               <ul className="text-blue-800 text-sm space-y-1">
                 <li>• {"Trust your instincts - they're usually right"}</li>
                 <li>• Seek input from other trusted people when unsure</li>
-                <li>• {"Remember that &quot;wait longer&quot; is always an option"}</li>
+                <li>• Remember that &quot;wait longer&quot; is always an option</li>
                 <li>• Consider encouraging professional counseling</li>
               </ul>
             </div>
@@ -383,7 +383,7 @@ export default function GuardianGuidePage() {
               <ul className="text-blue-800 text-sm space-y-1">
                 <li>• Set boundaries around your availability</li>
                 <li>• {"Don't carry the weight of their decisions"}</li>
-                <li>• {"Celebrate the positive impact you're making"}</li>
+                <li>• Celebrate the positive impact you're making</li>
                 <li>• Step back if the role becomes overwhelming</li>
               </ul>
             </div>
