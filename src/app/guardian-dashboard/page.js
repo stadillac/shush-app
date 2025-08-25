@@ -75,7 +75,7 @@ const getGuardianRequests = async (guardianEmail) => {
       blocked_date: '2024-01-08',
       request_date: '2024-01-20',
       current_mood: 'anxious',
-      journal_entry: 'It\'s been two weeks since I blocked Mom and I feel terrible about it. But she was making my anxiety so much worse with constant criticism about my therapy.',
+      journal_entry: 'It&apos;s been two weeks since I blocked Mom and I feel terrible about it. But she was making my anxiety so much worse with constant criticism about my therapy.',
       additional_context: 'My birthday is coming up and I feel guilty.',
       urgency: 'high',
       status: 'approved',
