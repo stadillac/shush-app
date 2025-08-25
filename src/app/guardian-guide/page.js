@@ -75,7 +75,7 @@ export default function GuardianGuidePage() {
               <h3 className="text-lg font-semibold">Stay Supportive</h3>
             </div>
             <p className="text-gray-700">
-              Remember you're helping someone build healthier relationships. Be compassionate while maintaining healthy boundaries.
+              Remember you&apos;re helping someone build healthier relationships. Be compassionate while maintaining healthy boundaries.
             </p>
           </div>
         </div>
@@ -383,7 +383,7 @@ export default function GuardianGuidePage() {
               <ul className="text-blue-800 text-sm space-y-1">
                 <li>• Set boundaries around your availability</li>
                 <li>• {"Don't carry the weight of their decisions"}</li>
-                <li>• Celebrate the positive impact you're making</li>
+                <li>• Celebrate the positive impact you&apos;re making</li>
                 <li>• Step back if the role becomes overwhelming</li>
               </ul>
             </div>
