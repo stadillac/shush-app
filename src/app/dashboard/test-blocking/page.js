@@ -15,6 +15,7 @@ export default function BlockingTestPage() {
 
   useEffect(() => {
     initializeTestPage()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const initializeTestPage = async () => {
@@ -143,7 +144,7 @@ export default function BlockingTestPage() {
       
       const requestData = {
         mood: 'anxious',
-        journalEntry: 'I miss talking to them and wonder if they\'ve changed. I feel lonely today and want to reach out.',
+        journalEntry: 'I miss talking to them and wonder if they&apos;ve changed. I feel lonely today and want to reach out.',
         additionalContext: 'Test unblock request from blocking test page'
       }
 

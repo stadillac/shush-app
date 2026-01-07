@@ -158,4 +158,5 @@ class BackgroundSyncService {
   }
 }
 
-export default new BackgroundSyncService();
+const backgroundSyncService = new BackgroundSyncService();
+export default backgroundSyncService;

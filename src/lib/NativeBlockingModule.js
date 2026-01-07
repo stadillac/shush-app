@@ -76,5 +76,5 @@ class BlockingManager {
     }
   }
 }
-
-export default new BlockingManager();
+const blockingManager = new BlockingManager();
+export default blockingManager;

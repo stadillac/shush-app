@@ -32,103 +32,6 @@ import {
   respondToUnblockRequest 
 } from '../../lib/supabase'
 
-// Mock functions - replace with your actual supabase functions
-const getGuardianRequests = async (guardianEmail) => {
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  return [
-    {
-      id: '1',
-      user_name: 'Sarah M.',
-      user_email: 'sarah.m@example.com',
-      contact_name: 'Alex Johnson',
-      contact_relationship: 'Ex-partner/romantic',
-      blocked_reason: 'Trying to get back together constantly, making it hard for me to move on. Every time we talk, I end up confused and upset for days.',
-      platforms: ['SMS', 'Instagram', 'WhatsApp'],
-      blocked_date: '2024-01-15',
-      request_date: '2024-01-22',
-      current_mood: 'lonely',
-      journal_entry: 'I miss talking to them and keep wondering if they\'ve changed. I feel really lonely today and just want to reach out. But I also remember how confused and hurt I felt last time.',
-      additional_context: 'Had a rough day at work and feeling isolated.',
-      urgency: 'normal',
-      status: 'pending',
-      severity: 'high'
-    },
-    {
-      id: '2',
-      user_name: 'Mike R.',
-      user_email: 'mike.r@example.com',
-      contact_name: 'Jessica',
-      contact_relationship: 'Former friend',
-      blocked_reason: 'Toxic friendship that was affecting my mental health. They were manipulative and always made me feel guilty.',
-      platforms: ['Facebook', 'SMS'],
-      blocked_date: '2024-01-10',
-      request_date: '2024-01-21',
-      current_mood: 'calm',
-      journal_entry: 'I\'ve been thinking about Jessica and wondering if I was too harsh. Maybe I should give them another chance to explain their side.',
-      additional_context: 'Saw them at a mutual friend\'s party and they seemed different.',
-      urgency: 'low',
-      status: 'pending',
-      severity: 'medium'
-    },
-    {
-      id: '3',
-      user_name: 'Sarah M.',
-      user_email: 'sarah.m@example.com',
-      contact_name: 'Mom',
-      contact_relationship: 'Family member',
-      blocked_reason: 'Constant guilt tripping and emotional manipulation during my recovery.',
-      platforms: ['SMS', 'Email', 'Phone'],
-      blocked_date: '2024-01-08',
-      request_date: '2024-01-20',
-      current_mood: 'anxious',
-      journal_entry: 'It\'s been two weeks since I blocked Mom and I feel terrible about it. But she was making my anxiety so much worse with constant criticism about my therapy.',
-      additional_context: 'My birthday is coming up and I feel guilty.',
-      urgency: 'high',
-      status: 'approved',
-      guardian_response: 'I think you should wait a bit longer and maybe write her a letter first explaining your boundaries.',
-      response_date: '2024-01-20',
-      severity: 'high'
-    },
-    {
-      id: '4',
-      user_name: 'Mike R.',
-      user_email: 'mike.r@example.com',
-      contact_name: 'Tom',
-      contact_relationship: 'Coworker/professional',
-      blocked_reason: 'Inappropriate messages and making work uncomfortable.',
-      platforms: ['WhatsApp', 'Instagram'],
-      blocked_date: '2024-01-18',
-      request_date: '2024-01-19',
-      current_mood: 'confused',
-      journal_entry: 'Tom apologized and said he was just being friendly. Maybe I misunderstood his intentions?',
-      additional_context: 'HR got involved and he seemed genuinely sorry.',
-      urgency: 'normal',
-      status: 'denied',
-      guardian_response: 'Trust your instincts. Workplace boundaries are important and you had valid reasons to block him.',
-      response_date: '2024-01-19',
-      severity: 'medium'
-    }
-  ]
-}
-
-const respondToRequest = async (requestId, response, message) => {
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  return { success: true }
-}
-
-const getGuardianStats = async (guardianEmail) => {
-  await new Promise(resolve => setTimeout(resolve, 500))
-  return {
-    totalUsers: 2,
-    totalRequests: 15,
-    approvedRequests: 7,
-    deniedRequests: 4,
-    pendingRequests: 4,
-    averageResponseTime: '4 hours',
-    streak: 12 // days as active guardian
-  }
-}
-
 // Component to handle search params with Suspense
 function GuardianDashboardContent() {
   const [requests, setRequests] = useState([])
@@ -148,6 +51,7 @@ function GuardianDashboardContent() {
 
   useEffect(() => {
     loadDashboardData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demoEmail])
 
   const loadDashboardData = async () => {
@@ -179,7 +83,7 @@ function GuardianDashboardContent() {
       // Load requests and stats using the guardian email
       const [requestsData, statsData] = await Promise.all([
         getGuardianRequests(guardianEmail),
-        getGuardianStats(guardianEmail)
+        getGuardianDashboardStats(guardianEmail)
       ])
       
       setRequests(requestsData)
@@ -193,9 +97,21 @@ function GuardianDashboardContent() {
   }
 
   const handleResponse = async (requestId, response) => {
+    if (!responseMessage.trim() && response === 'denied') {
+      setError('Please provide a message explaining your decision')
+      return
+    }
+    
     try {
       setActionLoading(requestId)
-      await respondToRequest(requestId, response, responseMessage)
+      setError('')
+      
+      await respondToUnblockRequest(
+        requestId, 
+        response, 
+        responseMessage || `Request ${response} by guardian.`,
+        currentGuardian.email
+      )
       
       // Update local state
       setRequests(prev => prev.map(req => 
@@ -212,7 +128,7 @@ function GuardianDashboardContent() {
       setShowRequestDetails(null)
       setResponseMessage('')
     } catch (err) {
-      setError('Failed to respond to request')
+      setError(err.message || 'Failed to respond to request')
     } finally {
       setActionLoading(null)
     }
@@ -445,7 +361,7 @@ function GuardianDashboardContent() {
                     
                     <div>
                       <span className="text-sm font-medium text-gray-700">Platforms: </span>
-                      <span className="text-sm text-gray-600">{request.platforms.join(', ')}</span>
+                      <span className="text-sm text-gray-600">{request.platforms?.join(', ') || 'N/A'}</span>
                     </div>
                   </div>
 
@@ -462,9 +378,9 @@ function GuardianDashboardContent() {
                       <span className="font-medium">Current thoughts:</span>
                     </p>
                     <p className="text-sm text-gray-800">
-                      &quot;{request.journal_entry.length > 150 
+                      &quot;{request.journal_entry?.length > 150 
                         ? request.journal_entry.substring(0, 150) + '...'
-                        : request.journal_entry}&quot;
+                        : request.journal_entry || 'No journal entry provided.'}&quot;
                     </p>
                   </div>
 
@@ -483,9 +399,11 @@ function GuardianDashboardContent() {
                           <XCircle className="h-4 w-4 text-red-500 mr-1" />
                         )}
                         <span className="capitalize text-gray-600">{request.status}</span>
-                        <span className="text-gray-400 ml-2">
-                          {new Date(request.response_date).toLocaleDateString()}
-                        </span>
+                        {request.response_date && (
+                          <span className="text-gray-400 ml-2">
+                            {new Date(request.response_date).toLocaleDateString()}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -511,32 +429,14 @@ function GuardianDashboardContent() {
                   {request.status === 'pending' && (
                     <>
                       <button
-                        onClick={() => handleResponse(request.id, 'approved')}
-                        disabled={actionLoading === request.id}
+                        onClick={() => {
+                          setShowRequestDetails(request.id)
+                          setResponseMessage('')
+                        }}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center"
                       >
-                        {actionLoading === request.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <ThumbsUp className="h-4 w-4 mr-1" />
-                            Approve
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleResponse(request.id, 'denied')}
-                        disabled={actionLoading === request.id}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center justify-center"
-                      >
-                        {actionLoading === request.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <ThumbsDown className="h-4 w-4 mr-1" />
-                            Deny
-                          </>
-                        )}
+                        <ThumbsUp className="h-4 w-4 mr-1" />
+                        Respond
                       </button>
                     </>
                   )}
@@ -561,7 +461,10 @@ function GuardianDashboardContent() {
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">Request Details</h2>
                     <button
-                      onClick={() => setShowRequestDetails(null)}
+                      onClick={() => {
+                        setShowRequestDetails(null)
+                        setResponseMessage('')
+                      }}
                       className="text-gray-400 hover:text-gray-600"
                     >
                       <XCircle className="h-6 w-6" />
@@ -604,7 +507,7 @@ function GuardianDashboardContent() {
                     <div>
                       <h3 className="font-semibold text-gray-900 mb-2">Current thoughts and feelings:</h3>
                       <p className="text-gray-700 bg-blue-50 p-4 rounded-lg">
-                        &quot;{request.journal_entry}&quot;
+                        &quot;{request.journal_entry || 'No journal entry provided.'}&quot;
                       </p>
                     </div>
 
@@ -642,13 +545,13 @@ function GuardianDashboardContent() {
                         onChange={(e) => setResponseMessage(e.target.value)}
                         rows={3}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                        placeholder="Explain your decision to help them understand your reasoning..."
+                        placeholder="Explain your decision to help them understand your reasoning... (required for denying)"
                       />
                       <div className="flex justify-end space-x-3 mt-4">
                         <button
                           onClick={() => handleResponse(request.id, 'denied')}
                           disabled={actionLoading === request.id}
-                          className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
+                          className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center disabled:opacity-50"
                         >
                           {actionLoading === request.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                           Deny Request
@@ -656,7 +559,7 @@ function GuardianDashboardContent() {
                         <button
                           onClick={() => handleResponse(request.id, 'approved')}
                           disabled={actionLoading === request.id}
-                          className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                          className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center disabled:opacity-50"
                         >
                           {actionLoading === request.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                           Approve Request
@@ -670,9 +573,11 @@ function GuardianDashboardContent() {
                     <div className="mt-8 p-4 bg-blue-50 rounded-lg">
                       <h3 className="font-semibold text-blue-900 mb-2">Your Previous Response:</h3>
                       <p className="text-blue-800">&quot;{request.guardian_response}&quot;</p>
-                      <p className="text-blue-600 text-sm mt-2">
-                        Responded on {new Date(request.response_date).toLocaleDateString()}
-                      </p>
+                      {request.response_date && (
+                        <p className="text-blue-600 text-sm mt-2">
+                          Responded on {new Date(request.response_date).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -698,6 +603,7 @@ function GuardianDashboardLoading() {
 export default function GuardianDashboard() {
   return (
     <Suspense fallback={<GuardianDashboardLoading />}>
+      <GuardianDashboardContent />
     </Suspense>
   )
 }

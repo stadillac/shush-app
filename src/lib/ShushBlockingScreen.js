@@ -16,6 +16,7 @@ const ShushBlockingScreen = () => {
       BlockingManager.removeListener('onNumberBlocked');
       BlockingManager.removeListener('onNumberUnblocked');
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const initializeBlocking = async () => {
@@ -256,4 +257,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ShushBlockingScreen;
+const shushBlockingScreen = new ShushBlockingScreen();
+export default shushBlockingScreen;
