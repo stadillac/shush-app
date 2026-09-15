@@ -174,3 +174,13 @@ If you don't have email configured in Supabase, you can:
 **Reset fails after clicking link:**
 - The token may have expired (1 hour limit)
 - Try requesting a new reset link
+
+# Native Android Call Blocking
+
+Real call blocking (rejecting calls from a user's blocked contacts) lives
+in a separate native Android Studio project at [`android/`](./android),
+not in this Next.js app — browsers have no access to telephony APIs. See
+[`android/README.md`](./android/README.md) for setup, the required
+Supabase RLS policy, and how to test it. SMS/text blocking is a
+follow-up project (it requires the app to become the phone's default SMS
+app) and isn't built yet.

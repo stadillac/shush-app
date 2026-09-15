@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shush</string>
+
+    <string name="section_sign_in_subtitle">Sign in with your Shush account</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="button_sign_in">Sign In</string>
+    <string name="error_missing_credentials">Enter your email and password</string>
+    <string name="auth_status_signing_in">Signing in…</string>
+    <string name="auth_status_signed_in">Signed in</string>
+    <string name="auth_status_signed_out">Not signed in</string>
+    <string name="auth_status_failed">Sign in failed</string>
+
+    <string name="section_call_blocking">Call Blocking</string>
+    <string name="section_call_blocking_subtitle">Grant Shush the Caller ID &amp; spam blocking role so it can reject calls from your blocked contacts.</string>
+    <string name="button_enable_call_blocking">Enable Call Blocking</string>
+    <string name="role_status_granted">Call blocking is ACTIVE</string>
+    <string name="role_status_not_granted">Call blocking is NOT active yet</string>
+    <string name="role_status_unavailable">This device does not support the call screening role</string>
+    <string name="role_status_unsupported">Requires Android 10 or newer</string>
+
+    <string name="section_blocked_numbers">Blocked Numbers (synced from Shush)</string>
+    <string name="button_sync_now">Sync Now</string>
+    <string name="sync_status_running">Syncing…</string>
+    <string name="sync_status_success">Synced</string>
+    <string name="sync_status_failed">Sync failed</string>
+    <string name="blocked_list_empty">No blocked contacts synced yet</string>
+</resources>
