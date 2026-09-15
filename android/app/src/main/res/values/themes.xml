@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Shush" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/shush_primary</item>
+        <item name="colorPrimaryDark">@color/shush_primary_dark</item>
+        <item name="colorAccent">@color/shush_accent</item>
+    </style>
+</resources>
